@@ -3,6 +3,10 @@ meter-chel Infra repository
 
 # HomeWork #5 Знакомство с облачной инфраструктурой и облачными сервисами
 
+bastion_IP = 130.193.58.17
+someinternalhost_IP = 10.128.0.24
+
+
 ## Cоздание учетной записи в Yandex
 Привязка аккаунта к Yandex.Cloud
 Создано новое облако cloud-otus-meter
