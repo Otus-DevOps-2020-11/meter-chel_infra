@@ -1,11 +1,9 @@
 # meter-chel_infra
 meter-chel Infra repository
 
+# HomeWork #5 Знакомство с облачной инфраструктурой и облачными сервисами
 
-```
-HomeWork #5 Знакомство с облачной инфраструктурой и облачными сервисами
-
-Cоздание учетной записи в Yandex
+## Cоздание учетной записи в Yandex
 Привязка аккаунта к Yandex.Cloud
 Создано новое облако cloud-otus-meter
 Создан новый каталог infra
@@ -19,40 +17,55 @@ Cоздание учетной записи в Yandex
 с внутренним адресом, логин meter, публичный ключ
 и доступ к консоли разрешен
 
-зашел снаружи на bastion```
+зашел снаружи на bastion
+```
 ssh -i ~/.ssh/id_rsa meter@130.193.58.17
-```ок
-как велит мануал на странице 11.1 сделал```
+```
+ок
+
+как велит мануал на странице 11.1 сделал
+```
 ssh meter@10.128.0.24
-```ожидаемо был послан
+```
+ожидаемо был послан
 
-настройка SSH forwarding
-на локальной машине```
+### настройка SSH forwarding
+на локальной машине
+```
 ssh-add -L
-```добавить приватный ключ в SSH агент```
+```
+добавить приватный ключ в SSH агент
+```
 ssh-add ~/.ssh/id_rsa
+```
 
-```Вход``` ssh -i ~/.ssh/id_rsa -A meter@130.193.58.17
-```и``` ssh meter@10.128.0.24
-```и ок т.к.```
-hostname
-```someinternalhost
-и``` ip a show eth0
-```2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
+Вход
+```
+ssh -i ~/.ssh/id_rsa -A meter@130.193.58.17
+```
+и
+```
+ssh meter@10.128.0.24
+```
+и ок т.к. `hostname` = `someinternalhost` и `ip a show eth0`
+```
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
     link/ether d0:0d:bd:7d:99:80 brd ff:ff:ff:ff:ff:ff
     inet 10.128.0.24/24 brd 10.128.0.255 scope global eth0
        valid_lft forever preferred_lft forever
     inet6 fe80::d20d:bdff:fe7d:9980/64 scope link
        valid_lft forever preferred_lft forever
-
-проверил на бастионе ```
+```
+проверил на бастионе
+```
 ls -la ~/.ssh
-```ключей нет```
-
+```
+ключей нет
 
 https://130.193.58.17/setup
 
-```На хосте bastion выполняем команды (стр 13.2)```
+### На хосте bastion выполняем команды (стр 13.2)
+```
 su
 cat <<EOF> setupvpn.sh
 #!/bin/bash
@@ -66,54 +79,52 @@ apt-get --assume-yes install pritunl mongodb-org
 systemctl start pritunl mongod
 systemctl enable pritunl mongod
 EOF
+```
 
-bash setupvpn.sh ```(выполняется скрипт установки mongodb и VPN-cервера pritunl)
+Выполняется скрипт установки mongodb и VPN-cервера pritunl
+`bash setupvpn.sh`
 
 Открываем в браузере ссылку: https://130.193.58.17/setup
 
-Ошибку SSL пропускаем и доверяем этому сайту
-Cледуем инструкциям на экране```
-
+Ошибку SSL пропускаем и доверяем этому сайту. Cледуем инструкциям на экране
+```
 pritunl setup-key
-```1ffddabf025d4761921096c348b3f088 - полученный ключ в строку ввода
+```
+1ffddabf025d4761921096c348b3f088 - полученный ключ в строку ввода
 
-адрес:```
-mongodb://localhost:27017/pritunl
+адрес: `mongodb://localhost:27017/pritunl`
 
+### Сгенерирован пароль на страницу ввода
 
-pritunl default-password
-```сгенерированный пароль в страницу ввода
+```
 username: "pritunl"
 password: "Y9RjnMR7TphT"
-после появилась форма смены имени и пароля, оставил старые
+```
+После появилась форма смены имени и пароля, оставил старые
 
-добавил организацию meter-otus
-добавил пользователя test с PIN 6214157507237678334670591556762
-добавил сервер meterVPN порт 14608 udp Virtual Network 192.168.235.0/24
-и привязал его к организации meter-otus
+Добавил организацию `meter-otus`
+Добавил пользователя `test` с PIN 6214157507237678334670591556762
+Добавил сервер `meterVPN` порт `14608 udp Virtual Network 192.168.235.0/24` и привязал его к организации meter-otus
 
-скачал конфигурационный файл meter-otus_test_meterVPN.ovpn
+Скачал конфигурационный файл meter-otus_test_meterVPN.ovpn
 ЗАПУСТИТЬ СЕРВЕР ТОЖЕ НУЖНО!!!!
 
-НА РАБОЧЕМ ХОСТЕ установить openvpn:```
+### НА РАБОЧЕМ ХОСТЕ установить openvpn:
 установка openvpn
+```
 apt install openvpn
 
 openvpn --config meter-otus_test_meterVPN.ovpn
-```логин test пароль 6214157507237678334670591556762```
+```
+логин test пароль 6214157507237678334670591556762```
 
-ssh -i ~/.ssh/id_rsa meter@10.128.0.24
+`ssh -i ~/.ssh/id_rsa meter@10.128.0.24`
 
-```подтверждение:```
-hostname
-```someinternalhost
+подтверждение: `hostname = someinternalhost`
 
-
-Доп задание
-Предложить вариант решения для подключения из консоли при
-помощи команды вида ssh someinternalhost из локальной
-консоли рабочего устройства
-
+## Доп задание
+Предложить вариант решения для подключения из консоли при помощи команды вида ssh someinternalhost из локальной консоли рабочего устройства
+```
 ~/.ssh файл config
 
 host bastion
@@ -128,14 +139,17 @@ ProxyCommand ssh -W %h:%p meter@130.193.58.17
 
 meter@someinternalhost:~$ hostname
 someinternalhost
+```
 Выполнено
 
-
-Сертификат
-в настройках pritunl Server в поле Lets Encrypt Domain добавить
+## Сертификат
+В настройках pritunl Server в поле Lets Encrypt Domain добавить
+```
 130.193.58.17.sslip.io
 130.193.58.17.xip.io
-но не сработало
-"detail": "Error creating new order :: too many certificates already issued for: xip.io: see https://letsencrypt.org/docs/rate-limits/",
-50 сертификатов на домен в неделю ...
 ```
+но не сработало
+```
+"detail": "Error creating new order :: too many certificates already issued for: xip.io: see https://letsencrypt.org/docs/rate-limits/"
+```
+50 сертификатов на домен в неделю...
