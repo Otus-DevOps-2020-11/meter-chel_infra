@@ -4,9 +4,8 @@ meter-chel Infra repository
 
 ```
 HomeWork #5 Знакомство с облачной инфраструктурой и облачными сервисами
-```
 
-```Создание учетной записи в Yandex
+Cоздание учетной записи в Yandex
 Привязка аккаунта к Yandex.Cloud
 Создано новое облако cloud-otus-meter
 Создан новый каталог infra
@@ -76,9 +75,9 @@ bash setupvpn.sh ```(выполняется скрипт установки mong
 Cледуем инструкциям на экране```
 
 pritunl setup-key
-```1ffddabf025d4761921096c348b3f088 - полученный ключ в строку ввода```
+```1ffddabf025d4761921096c348b3f088 - полученный ключ в строку ввода
 
-```адрес:```
+адрес:```
 mongodb://localhost:27017/pritunl
 
 
@@ -107,10 +106,10 @@ ssh -i ~/.ssh/id_rsa meter@10.128.0.24
 
 ```подтверждение:```
 hostname
-```someinternalhost```
+```someinternalhost
 
 
-```Доп задание
+Доп задание
 Предложить вариант решения для подключения из консоли при
 помощи команды вида ssh someinternalhost из локальной
 консоли рабочего устройства
@@ -130,9 +129,9 @@ ProxyCommand ssh -W %h:%p meter@130.193.58.17
 meter@someinternalhost:~$ hostname
 someinternalhost
 Выполнено
-```
 
-```Сертификат
+
+Сертификат
 в настройках pritunl Server в поле Lets Encrypt Domain добавить
 130.193.58.17.sslip.io
 130.193.58.17.xip.io
