@@ -157,3 +157,5 @@ someinternalhost
 "detail": "Error creating new order :: too many certificates already issued for: xip.io: see https://letsencrypt.org/docs/rate-limits/"
 ```
 50 сертификатов на домен в неделю...
+
+HomeWork 6 Деплой тестового приложения'''
