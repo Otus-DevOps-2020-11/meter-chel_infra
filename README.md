@@ -160,7 +160,7 @@ someinternalhost
 
 HomeWork 6 Деплой тестового приложения
 
-testapp_IP = 84.201.180.73
+testapp_IP = 130.193.45.104
 testapp_port = 9292
 
 Установка curl
@@ -252,4 +252,4 @@ puma -d
 ps aux | grep puma
 
 Проверка работы
-http://84.201.180.73:9292/
+http://130.193.45.104:9292/
