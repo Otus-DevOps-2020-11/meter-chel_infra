@@ -160,7 +160,7 @@ someinternalhost
 
 HomeWork 6 Деплой тестового приложения
 
-testapp_IP = 130.193.46.147
+testapp_IP = 84.201.180.73
 testapp_port = 9292
 
 Установка curl
@@ -252,9 +252,4 @@ puma -d
 ps aux | grep puma
 
 Проверка работы
-http://130.193.46.147:9292/
-
-Изменил в /etc/mongod.conf - теперь слушает все порты
-net:
-  port: 27017
-  bindIp:0.0.0.0 (было 127.0.0.1)
+http://84.201.180.73:9292/
