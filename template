@@ -1,0 +1,22 @@
+#cloud-config
+users:
+  - name: yc-user
+    shell: /bin/bash
+    groups: sudo
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    ssh-authorized-keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDYymMPEnMBoqq/CtSdAycdpW1tKgIILiuc5vOzx9mUtRZQC6j8H3Yv1gD5r/W84PS0aBJtCfzeawgUqwAe6qkJxf+4nERA76RtLj/EDeO92S6EER8hR7mShEyeIu3oXH9tqnYdR02WUOOlHsNOP52+cjRNwkJuF2bQCBniiqQlyyFLws3hlCyoYA5nDwEQXkEKyWECNnYuhg8vymxr+qrxohw9AiB8Vmnk/dCd8bFSj4JkYAnRjRsjm3hvQCrlM5D62xDo+1Tkq74IqUkjfU27TGl7Up59mCoHEFVvizSXE922XdTjVzo3SC/sFQ+pLs5Dpt9T8nlLuEbFzrdWD0A7
+runcmd:
+  - apt update
+  - apt install -y ruby-full ruby-bundler build-essential git
+  - wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | sudo apt-key add -
+  - echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/4.2 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.2.list
+  - apt update
+  - apt install -y mongodb-org
+  - systemctl start mongod
+  - systemctl enable mongod
+  - git clone -b monolith https://github.com/express42/reddit.git /home/yc-user/reddit/
+  - cd /home/yc-user/reddit/
+  - bundle install
+  - puma -d
+  - echo "Ok"
