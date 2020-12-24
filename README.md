@@ -164,17 +164,20 @@ testapp_IP = 130.193.45.104
 testapp_port = 9292
 
 ###Установка curl
+```
 apt install curl
-
+```
 ###Интерактивная установка CLI
 https://cloud.yandex.ru/docs/cli/operations/install-cli#interactive
-
+```
 curl https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
+```
 Скрипт установит CLI и добавит путь до исполняемого файла в переменную окружения PATH.
 
 После завершения установки перезапустить командную оболочку.
+```
 exec -l $SHELL
-
+```
 ##Создание профиля
 https://cloud.yandex.ru/docs/cli/operations/profile/profile-create
 
@@ -182,19 +185,22 @@ https://cloud.yandex.ru/docs/cli/operations/profile/profile-create
 AgAAAABKx-eaAATuwd9nKf9Wy0clsNmFjQQWXJM
 
 настройка профиля
+```
 yc init
-
+```
 посмотреть что получилось
+```
 yc config list
-
+```
 Убедитесь, что ваш профиль в состоянии ACTIVE
+```
 yc config profilelist
-
+```
 
 ##Создаем новый инстанс
 Используем CLI для создания инстанса, для проверки корректности
 работы CLI после настройки
-
+```
 yc compute instance create \
   --name reddit-app \
   --hostname reddit-app \
@@ -203,53 +209,54 @@ yc compute instance create \
   --network-interface subnet-name=default-ru-central1-c,nat-ip-version=ipv4 \
   --metadata serial-port-enable=1 \
   --ssh-key ~/.ssh/id_rsa.pub
-
+```
 в профиль ssh доступ на новую машину, только пользователь yc-user
 
 ##Обновляем APT и устанавливаем Ruby и Bundler:
+```
 apt update
 apt install -y ruby-full ruby-bundler build-essential
-
+```
 
 Проверяем Ruby и Bundler
-ruby -v
+`ruby -v`
 ruby 2.3.1p112 (2016-04-26) [x86_64-linux-gnu]
-bundler -v
+`bundler -v`
 Bundler version 1.11.2
 
 ##Устанавливаем MongoDB
 Добавляем ключи и репозиторий MongoDB.
-
+```
 wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | apt-key add -
 echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/4.2 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-4.2.list
-
+```
 Обновим индекс доступных пакетов и установим нужный пакет:
+```
 apt-get update
 apt-get install -y mongodb-org
-
+```
 
 ###Запускаем MongoDB:
-systemctl start mongod
+`systemctl start mongod`
 
 Добавляем в автозапуск:
-systemctl enable mongod
+`systemctl enable mongod`
 
 Проверяем работу MongoDB
-systemctl status mongod
-
+`systemctl status mongod`
 
 ##Деплой приложения
 Копируем код
-git clone -b monolith https://github.com/express42/reddit.git
+`git clone -b monolith https://github.com/express42/reddit.git`
 
 Переходим в директорию проекта и устанавливаем зависимости приложения:
-cd reddit && bundle install
+`cd reddit && bundle install`
 
 Запускаем сервер приложения в папке проекта:
-puma -d
+`puma -d`
 
 Проверьте что сервер запустился и на каком порту он слушает:
-ps aux | grep puma
+`ps aux | grep puma`
 
 ##Проверка работы
 http://130.193.45.104:9292/
@@ -257,15 +264,15 @@ http://130.193.45.104:9292/
 #Домашняя работа №7 Сборка образов VM при помощи Packer
 
 ## создать и перейти в ветку packer-base
-```git checkout -b packer-base
-```
+`git checkout -b packer-base`
+
 ## Установка Packer
 Скачал (https://www.packer.io/downloads.html)
 
 echo $PATH
 распаковал Packer в папку /usr/local/bin
 
-Проверьте установку командой packer -v
+Проверьте установку командой `packer -v`
 версия 1.1.6
 
 ## Создание сервисного аккаунта для Packer в Yandex.Cloud
