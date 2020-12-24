@@ -278,20 +278,22 @@ echo $PATH
 ## Создание сервисного аккаунта для Packer в Yandex.Cloud
 
 Получите ваш folder-id - ID каталога в Yandex.Cloud:
-```yc config list
-```
+`yc config list`
+
 token: AgAAAABKx-eaAATuwd9nKf9Wy0clsNmFjQQWXJM
 cloud-id: 111111111111111111111
 folder-id: 222222222222222222
 compute-default-zone: ru-central1-c
 
 Создать сервисный аккаунт:
-```SVC_ACCT="meter-packer-base"
+```
+SVC_ACCT="meter-packer-base"
 FOLDER_ID="22222222222222222"
 yc iam service-account create --name $SVC_ACCT --folder-id $FOLDER_ID
 ```
 Выдайте права аккаунту:
-```ACCT_ID=$(yc iam service-account get $SVC_ACCT | \
+```
+ACCT_ID=$(yc iam service-account get $SVC_ACCT | \
 grep ^id | awk '{print $2}')
 
 yc resource-manager folder add-access-binding --id $FOLDER_ID \
@@ -303,13 +305,13 @@ yc resource-manager folder add-access-binding --id $FOLDER_ID \
 Создайте IAM key и экспортируйте его в файл. Помните, что
 файлы, содержащие секреты, необходимо хранить за пределами
 вашего репозитория.
-```yc iam key create --service-account-id $ACCT_ID --output ~/key.json
-```
+`yc iam key create --service-account-id $ACCT_ID --output ~/key.json`
+
 ## Создание файла-шаблона Packer
 
 Создайте в infra-репозитории директорию packer
-```mkdir ~/meter-chel_infra/packer
-```
+`mkdir ~/meter-chel_infra/packer`
+
 Внутри директории packer создайте файл ubuntu16.json. Это и
 будет наш Packer шаблон, содержащий описание образа VM,
 который мы хотим создать. Для нашего тестового приложения мы
@@ -371,15 +373,15 @@ install_mongodb.sh из предыдущего ДЗ
 
 ## Packer позволяет выполнить синтаксическую проверку
 шаблона. Сделайте её:
-```
-packer validate ./ubuntu16.json
-```
+
+`packer validate ./ubuntu16.json`
+
 Система попросила обновиться, сделал
-```yc components update
-```
+`yc components update`
+
 ## Процесс сборки образа:
-```packer build ./ubuntu16.json
-```
+`packer build ./ubuntu16.json`
+
 ## После сборки образа создал тестовую VM, получил доступ по SSH и установил reddit и проверил работоспособность
 ```
 ssh -i ~/.ssh/appuser appuser@<публичный IP машины>
