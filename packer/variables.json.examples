@@ -1,0 +1,8 @@
+{
+  "folder_id": "xxxxxxxxxxxxxx",
+  "source_image_family": "ubuntu-1604-lts",
+  "service_account_key_file": "key.json",
+  "disk_name": "hw7-hdd",
+  "disk_type": "network-hdd",
+  "disk_size_gb": "15"
+}

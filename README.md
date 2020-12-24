@@ -1,7 +1,7 @@
 # meter-chel_infra
 meter-chel Infra repository
 
-# HomeWork #5 Знакомство с облачной инфраструктурой и облачными сервисами
+#Домашняя работа №5 Знакомство с облачной инфраструктурой и облачными сервисами
 
 bastion_IP = 130.193.58.17
 someinternalhost_IP = 10.128.0.24
@@ -158,15 +158,15 @@ someinternalhost
 ```
 50 сертификатов на домен в неделю...```
 
-HomeWork 6 Деплой тестового приложения
+#Домашняя работа №6 Деплой тестового приложения
 
 testapp_IP = 130.193.45.104
 testapp_port = 9292
 
-Установка curl
+###Установка curl
 apt install curl
 
-Интерактивная установка CLI
+###Интерактивная установка CLI
 https://cloud.yandex.ru/docs/cli/operations/install-cli#interactive
 
 curl https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
@@ -175,7 +175,7 @@ curl https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
 После завершения установки перезапустить командную оболочку.
 exec -l $SHELL
 
-Создание профиля
+##Создание профиля
 https://cloud.yandex.ru/docs/cli/operations/profile/profile-create
 
 токен
@@ -191,7 +191,7 @@ yc config list
 yc config profilelist
 
 
-Создаем новый инстанс
+##Создаем новый инстанс
 Используем CLI для создания инстанса, для проверки корректности
 работы CLI после настройки
 
@@ -206,7 +206,7 @@ yc compute instance create \
 
 в профиль ssh доступ на новую машину, только пользователь yc-user
 
-Обновляем APT и устанавливаем Ruby и Bundler:
+##Обновляем APT и устанавливаем Ruby и Bundler:
 apt update
 apt install -y ruby-full ruby-bundler build-essential
 
@@ -217,7 +217,7 @@ ruby 2.3.1p112 (2016-04-26) [x86_64-linux-gnu]
 bundler -v
 Bundler version 1.11.2
 
-Устанавливаем MongoDB
+##Устанавливаем MongoDB
 Добавляем ключи и репозиторий MongoDB.
 
 wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | apt-key add -
@@ -228,7 +228,7 @@ apt-get update
 apt-get install -y mongodb-org
 
 
-Запускаем MongoDB:
+###Запускаем MongoDB:
 systemctl start mongod
 
 Добавляем в автозапуск:
@@ -238,7 +238,7 @@ systemctl enable mongod
 systemctl status mongod
 
 
-Деплой приложения
+##Деплой приложения
 Копируем код
 git clone -b monolith https://github.com/express42/reddit.git
 
@@ -251,5 +251,155 @@ puma -d
 Проверьте что сервер запустился и на каком порту он слушает:
 ps aux | grep puma
 
-Проверка работы
+##Проверка работы
 http://130.193.45.104:9292/
+
+#Домашняя работа №7 Сборка образов VM при помощи Packer
+
+## создать и перейти в ветку packer-base
+git checkout -b packer-base
+
+## Установка Packer
+Скачал (https://www.packer.io/downloads.html)
+
+echo $PATH
+распаковал Packer в папку /usr/local/bin
+
+Проверьте установку командой packer -v
+версия 1.1.6
+
+## Создание сервисного аккаунта для Packer в Yandex.Cloud
+
+Получите ваш folder-id - ID каталога в Yandex.Cloud:
+yc config list
+
+token: AgAAAABKx-eaAATuwd9nKf9Wy0clsNmFjQQWXJM
+cloud-id: 111111111111111111111
+folder-id: 222222222222222222
+compute-default-zone: ru-central1-c
+
+Создать сервисный аккаунт:
+SVC_ACCT="meter-packer-base"
+FOLDER_ID="22222222222222222"
+yc iam service-account create --name $SVC_ACCT --folder-id $FOLDER_ID
+
+Выдайте права аккаунту:
+ACCT_ID=$(yc iam service-account get $SVC_ACCT | \
+grep ^id | awk '{print $2}')
+
+yc resource-manager folder add-access-binding --id $FOLDER_ID \
+--role editor \
+--service-account-id $ACCT_ID
+
+
+Создание service account key fifile
+Создайте IAM key и экспортируйте его в файл. Помните, что
+файлы, содержащие секреты, необходимо хранить за пределами
+вашего репозитория.
+yc iam key create --service-account-id $ACCT_ID --output ~/key.json
+
+## Создание файла-шаблона Packer
+
+Создайте в infra-репозитории директорию packer
+mkdir ~/meter-chel_infra/packer
+
+Внутри директории packer создайте файл ubuntu16.json. Это и
+будет наш Packer шаблон, содержащий описание образа VM,
+который мы хотим создать. Для нашего тестового приложения мы
+соберем образ VM с предустановленными Ruby и MongoDB,так
+называемый baked-образ.
+
+cd ~/meter-chel_infra/packer
+touch ubuntu16.json
+
+
+В файле ubuntu16.json сконфигурируйте билдер (gist)
+Builders - секция, отвечающая за то, на какой платформе и с
+какими параметрами мы будем делать ВМ, которую впоследствии
+сохраним как образ.
+
+Provisioners - секция, которая позволяет устанавливать нужное
+ПО, производить настройки системы и конфигурацию приложений
+на созданной ВМ. Используя скрипты для установки Ruby и
+MongoDB из предыдущего ДЗ, определим два провижинера
+
+
+{
+    "builders": [
+	{
+	    "type": "yandex",
+	    "service_account_key_file": "/root/key.json",
+	    "folder_id": "b1g09rkrom55eupsmgpm",
+	    "source_image_family": "ubuntu-1604-lts",
+	    "image_name": "reddit-base-{{timestamp}}",
+	    "image_family": "reddit-base",
+	    "ssh_username": "ubuntu",
+	    "platform_id": "standard-v1",
+	    "use_ipv4_nat": "true",
+	    "disk_name": "hw7-hdd",
+	    "disk_type": "network-hdd",
+	    "disk_size_gb": "15"
+	}
+    ],
+    "provisioners": [
+	{
+	    "type": "shell",
+	    "script": "scripts/install_ruby.sh",
+	    "execute_command": "sudo {{.Path}}"
+	},
+	{
+	    "type": "shell",
+	    "script": "scripts/install_mongodb.sh",
+	    "execute_command": "sudo {{.Path}}"
+	}
+    ]
+}
+
+
+Создание скриптов для provisioners
+Внутри директории packer создайте директорию scripts для
+скриптов, которые будут использованы в provisioners
+Скопируйте в эту директорию скрипты install_ruby.sh и
+install_mongodb.sh из предыдущего ДЗ
+
+## Packer позволяет выполнить синтаксическую проверку
+шаблона. Сделайте её:
+
+packer validate ./ubuntu16.json
+
+Система попросила обновиться, сделал
+yc components update
+
+## Процесс сборки образа:
+packer build ./ubuntu16.json
+
+## После сборки образа создал тестовую VM, получил доступ по SSH и установил reddit и проверил работоспособность
+```
+ssh -i ~/.ssh/appuser appuser@<публичный IP машины>
+sudo apt-get update
+sudo apt-get install -y git
+git clone -b monolith https://github.com/express42/reddit.git
+cd reddit && bundle install
+puma -d
+```
+Откройте в браузере http://<внешний IP машины>:9292:
+
+## Параметризирование шаблона
+Создал файл variables.json с переменными и добавил в .gitignore. Добавил следующие параметры:
+```
+  "folder_id"
+  "source_image_family"
+  "service_account_key_file"
+  "disk_name"
+  "disk_type"
+  "disk_size_gb"
+```
+чтобы использовать шаблон нужно перейти в директорию packer
+Для сборки образа с использованием файла variables.json необходимо выполнить
+
+```
+packer build -var-file=variables.json ubuntu16.json
+```
+
+##Задания со *
+  (продолжение последует ...)
