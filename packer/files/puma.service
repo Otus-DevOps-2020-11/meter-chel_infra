@@ -1,0 +1,13 @@
+[Unit]
+Description=Puma
+After=network.target, mongod.service
+
+[Service]
+Type=simple
+Restart=always
+WorkingDirectory=/usr/local/reddit
+ExecStart=/usr/local/bin/puma
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
