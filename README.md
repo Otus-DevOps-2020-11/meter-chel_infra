@@ -411,4 +411,23 @@ packer build -var-file=variables.json ubuntu16.json
 ```
 
 ##Задания со *
-  (продолжение последует ...)
+
+###Построение bake-образа
+
+Создан шаблон immutable.json
+фактически в ubuntu16.json добавлено два провижинера
+```
+        {
+          "type": "file",
+          "source": "files/puma.service",
+          "destination": "/tmp/puma.service"
+        },
+        {
+          "type": "shell",
+          "script": "scripts/deploy.sh",
+          "execute_command": "sudo {{.Path}}"
+        }
+```
+которые автоматизируют установку и запуск ранее делаемые вручную,
+в папку скриптов добавлен deploy.sh"
+в папку files файл puma.service
