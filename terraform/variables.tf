@@ -23,5 +23,5 @@ variable service_account_key_file {
   description = "key.json"
 }
 variable private_key_path {
-  description = "Private key path"
+  description = "Private key path for ssh"
 }
