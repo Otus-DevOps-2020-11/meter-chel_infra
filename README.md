@@ -1,7 +1,8 @@
 # meter-chel_infra
 meter-chel Infra repository
 
-#Домашняя работа №5 Знакомство с облачной инфраструктурой и облачными сервисами
+
+# Домашняя работа к лекции №5 Знакомство с облачной инфраструктурой и облачными сервисами
 
 bastion_IP = 130.193.58.17
 someinternalhost_IP = 10.128.0.24
@@ -158,16 +159,16 @@ someinternalhost
 ```
 50 сертификатов на домен в неделю...```
 
-#Домашняя работа №6 Деплой тестового приложения
+# Домашняя работа к лекции №6 Деплой тестового приложения
 
 testapp_IP = 130.193.45.104
 testapp_port = 9292
 
-###Установка curl
+### Установка curl
 ```
 apt install curl
 ```
-###Интерактивная установка CLI
+### Интерактивная установка CLI
 https://cloud.yandex.ru/docs/cli/operations/install-cli#interactive
 ```
 curl https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
@@ -178,7 +179,7 @@ curl https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
 ```
 exec -l $SHELL
 ```
-##Создание профиля
+## Создание профиля
 https://cloud.yandex.ru/docs/cli/operations/profile/profile-create
 
 токен
@@ -197,7 +198,7 @@ yc config list
 yc config profilelist
 ```
 
-##Создаем новый инстанс
+## Создаем новый инстанс
 Используем CLI для создания инстанса, для проверки корректности
 работы CLI после настройки
 ```
@@ -212,7 +213,7 @@ yc compute instance create \
 ```
 в профиль ssh доступ на новую машину, только пользователь yc-user
 
-##Обновляем APT и устанавливаем Ruby и Bundler:
+## Обновляем APT и устанавливаем Ruby и Bundler:
 ```
 apt update
 apt install -y ruby-full ruby-bundler build-essential
@@ -224,7 +225,7 @@ ruby 2.3.1p112 (2016-04-26) [x86_64-linux-gnu]
 `bundler -v`
 Bundler version 1.11.2
 
-##Устанавливаем MongoDB
+## Устанавливаем MongoDB
 Добавляем ключи и репозиторий MongoDB.
 ```
 wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | apt-key add -
@@ -236,7 +237,7 @@ apt-get update
 apt-get install -y mongodb-org
 ```
 
-###Запускаем MongoDB:
+### Запускаем MongoDB:
 `systemctl start mongod`
 
 Добавляем в автозапуск:
@@ -245,7 +246,7 @@ apt-get install -y mongodb-org
 Проверяем работу MongoDB
 `systemctl status mongod`
 
-##Деплой приложения
+## Деплой приложения
 Копируем код
 `git clone -b monolith https://github.com/express42/reddit.git`
 
@@ -258,10 +259,11 @@ apt-get install -y mongodb-org
 Проверьте что сервер запустился и на каком порту он слушает:
 `ps aux | grep puma`
 
-##Проверка работы
+## Проверка работы
 http://130.193.45.104:9292/
 
-#Домашняя работа №7 Сборка образов VM при помощи Packer
+
+# Домашняя работа к лекции №7 Сборка образов VM при помощи Packer
 
 ## создать и перейти в ветку packer-base
 `git checkout -b packer-base`
@@ -410,9 +412,9 @@ puma -d
 packer build -var-file=variables.json ubuntu16.json
 ```
 
-##Задания со *
+## Задания со *
 
-###Построение bake-образа
+### Построение bake-образа
 
 Создан шаблон immutable.json
 фактически в ubuntu16.json добавлено два провижинера
@@ -431,3 +433,343 @@ packer build -var-file=variables.json ubuntu16.json
 которые автоматизируют установку и запуск ранее делаемые вручную,
 в папку скриптов добавлен deploy.sh"
 в папку files файл puma.service
+
+
+# Домашняя работа к лекции №8 Знакомство с Terraform (Terraform-1)
+
+создать и перейти в ветку terraform-1
+'git checkout -b terraform-1'
+
+Установка Terraform (используем версию 0.12.)
+Скачал (https://releases.hashicorp.com/terraform/0.12.0/terraform_0.12.0_linux_amd64.zip)
+
+'echo $PATH'
+распаковал Terraform в папку /usr/local/bin
+
+Проверьте установку командой 'terraform -v'
+Terraform v0.12.0
+Your version of Terraform is out of date! The latest version
+is 0.14.3. You can update by downloading from www.terraform.io/downloads.html
+
+
+Создайте директорию terraform внутри вашего проекта
+'mkdir terraform'
+
+Внутри директории terraform создайте пустой файл: main.tf
+```
+cd terraform/
+:~/meter-chel_infra/terraform# touch main.tf
+```
+
+В корне репозитория создайте файл .gitignore с содержимым
+```
+*.tfstate
+*.tfstate.*.backup
+*.tfstate.backup
+*.tfvars
+.terraform/
+```
+## определим секцию Provider в файле main.tf,
+которая позволит Terraform управлять ресурсами YC через API
+вызовы
+```
+provider "yandex" {
+token = "<Auth или статический ключ сервисного аккаунта>"
+cloud_id = "<идентификатор облака>"
+folder_id = "<идентификатор каталога>"
+zone = "ru-central1-a"
+}
+```
+Узнать их можно с помощью команды:
+`yc config list`
+
+
+Провайдеры Terraform являются загружаемыми модулями, начиная с версии 0.10.
+Для того чтобы загрузить провайдер и начать его использовать выполните
+следующую команду в директории terraform:
+`terraform init`
+
+В файле main.tf после определения провайдера, добавьте ресурс для создания
+инстанса VM в YC.
+Определим SSH ключ пользователя ubuntu в метаданных нашего инстанса.
+Помним, что публичные ключи доступны инстансам VM именно через метаданные.
+Здесь мы используем встроенную функцию file, которая позволяет считывать
+содержимое файла и вставлять его в наш конфигурационный файл.
+```
+resource "yandex_compute_instance" "app" {
+  name = "reddit-app"
+}
+
+  resources {
+    cores  = 2
+    memory = 2
+  }
+
+  boot_disk {
+    initialize_params {
+      # Указать id образа созданного в предыдущем домашем задании
+      image_id = "fd8fg4r8mrvoq6q2ve76"
+    }
+  }
+
+  network_interface {
+    # Указан id подсети default-ru-central1-a
+    subnet_id = "e9bem33uhju28r5i7pnu"
+    nat       = true
+  }
+
+metadata = {
+ssh-keys = "ubuntu:${file("~/.ssh/yc.pub")}"
+
+}
+```
+Посмотреть информацию о имени, семействе и id пользовательских образов своего
+каталога можно с помощью команды `yc compute image list`
+
+Перед тем как дать команду terraform'у применить изменения,
+хорошей практикой является предварительно посмотреть, какие
+изменения terraform собирается произвести
+`terraform plan`
+
+Для того чтобы запустить инстанс VM, описание характеристик которого мы описали
+в конфигурационном файле main.tf, используем команду:
+`terraform apply`
+
+Начиная с версии 0.11 terraform apply запрашивает дополнительное подтверждение
+при выполнении. Необходимо добавить '-auto-approve' для отключения этого.
+Результатом выполнения команды также будет создание файла `terraform.tfstate`
+ в директории terraform. Terraform хранит в этом файле состояние управляемых им
+ресурсов.
+Искать нужные атрибуты ресурсов по state файлу не очень удобно, поэтому
+terraform предоставляет команду show для чтения стейт файла.
+Найдите внешний IP адрес созданного инстанса, но уже используя команду show:
+`terraform show | grep nat_ip_address`
+
+Зная внешний IP адрес, попробуем подключиться к инстансу по SSH
+
+При необходимости пересоздать инстанс, нужно вначале его уничтожить:
+`terraform destroy`
+
+# Использование переменных и Provisioners
+
+## Output vars
+Согласитесь, что каждый раз использовать grep для поиска внешнего IP адреса по
+результатам команды terraform show довольно неудобно. К тому же, если у нас
+будет запущено несколько VM, то понять к какой машине относится какой адрес
+становится еще сложнее.
+Поэтому вынесем интересующую нас информацию - внешний адрес VM - в выходную
+переменную (output variable), чтобы облегчить себе поиск. Чтобы не мешать
+выходные переменные с основной конфигурацией наших ресурсов, создадим их в
+отдельном файле, который назовем outputs.tf. Помним, что название файла может
+быть любым, т.к. terraform загружает все файлы в текущей директории, имеющие
+расширение .tf.
+Создайте файл outputs.tf в директории terraform со следующим содержимым.
+```
+output "external_ip_address_app" {
+  value = yandex_compute_instance.app.network_interface.0.nat_ip_address
+}
+```
+Формат
+yandex_compute_instance.app - инициализируем ресурс, указывая его тип и имя
+network_interface.0.nat_ip_address - указываем нужные атрибуты ресурса
+
+Используем команду `terraform refresh`, чтобы выходная переменная приняла
+значение.
+Outputs:
+external_ip_address_app = 130.193.37.129
+
+Значение выходных переменным можно посмотреть, используя
+команду `terraform output`:
+
+`terraform output`
+external_ip_address_app = 130.193.37.129
+`terraform output external_ip_address_app`
+130.193.37.129
+
+## Provisioners
+Provisioners в terraform вызываются в момент создания/удаления ресурса и
+позволяют выполнять команды на удаленной или локальной машине. Их используют
+для запуска инструментов управления конфигурацией или начальной настройки системы.
+Используем провижинеры для деплоя последней версии приложения на созданную VM.
+Внутрь ресурса, содержащего описание VM, вставьте секцию провижинера типа file,
+ который позволяет копировать содержимое файла на удаленную машину.
+```
+provisioner "file" {
+source = "files/puma.service"
+destination = "/tmp/puma.service"
+}
+```
+В нашем случае мы говорим, провижинеру скопировать локальный файл, располагающийся
+по указанному относительному пути (files/puma.service), в указанное место на удаленном хосте.
+В определении провижинера мы указали путь до systemd unit файла для Puma.
+Systemd использует unit файлы для запуска, остановки сервиса или добавления его в
+автозапуск. С его помощью мы можем запускать сервер приложения, используя
+команду systemctl start puma.
+Создадим директорию files внутри директории terraform и создадим внутри нее файл puma.service
+
+Добавим еще один провиженер для запуска скрипта деплоя
+приложения на создаваемом инстансе. Сразу же после
+определения провижинера file (провижинеры выполняются по
+порядку их определения), вставьте секцию провижинера remoteexec:
+```
+provisioner "remote-exec" {
+script = "files/deploy.sh"
+}
+```
+В определении данного провижинера мы указываем
+относительный путь до скрипта, который следует запустить на
+созданной VM.
+Создайте файл deploy.sh в директории terraform/files
+
+Определим параметры подключения провиженеров к VM.
+Внутрь ресурса VM, перед определением провижинеров, добавьте
+следующую секцию :
+
+connection {
+  type = "ssh"
+  host = yandex_compute_instance.app.network_interface.0.nat_ip_address
+  user = "ubuntu"
+  agent = false
+  # путь до приватного ключа
+  private_key = file("~/.ssh/id_rsa")
+  }
+
+В данном примере мы указываем, что провижинеры, определенные в ресурсе VM,
+должны подключаться к созданной VM по SSH, используя для подключения приватный
+ключ пользователя
+
+
+Так как провижинеры по умолчанию запускаются сразу после
+создания ресурса (могут еще запускаться после его удаления),
+чтобы проверить их работу нам нужно удалить ресурс VM и создать
+его снова.
+Terraform предлагает команду `taint`, которая позволяет пометить
+ресурс, который terraform должен пересоздать, при следующем
+`запуске terraform apply`.
+
+пересоздать ресурс VM при следующем применении изменений:
+`terraform taint yandex_compute_instance.app`
+
+Планируем изменения: `terraform plan`
+```
+# yandex_compute_instance.app is tainted, so must be replaced
+-/+ resource "yandex_compute_instance" "app" {
+~ created_at = "2020-04-08T08:19:56Z" -> (known after apply)
+~ folder_id = "b1g4871feed9nkfl3dnu" -> (known after apply)
+```
+-/+ означает, что ресурс будет удален и создан вновь.
+
+Применяем изменения `terraform apply`
+
+Расшифровка вывода
+yandex_compute_instance.app (remote-exec): Connected! -
+провиженеру удалось подключиться к VM.
+
+yandex_compute_instance.app (remote-exec): Cloning into
+'/home/ubuntu/reddit'... - скрипт запустился и началось
+клонирование репозитория.
+
+## Input vars
+Входные переменные позволяют нам параметризировать
+конфигурационные файлы.
+Для того чтобы использовать входную переменную ее нужно
+сначала определить в одном из конфигурационных файлов.
+Создадим для этих целей еще один конфигурационный файл
+variables.tf в директории terraform
+
+Определим переменные в файле variables.tf
+```
+variable cloud_id{
+  description = "Cloud"
+}
+variable folder_id {
+  description = "Folder"
+}
+variable zone {
+  description = "Zone"
+  # Значение по умолчанию
+  default = "ru-central1-a"
+}
+variable public_key_path {
+  # Описание переменной
+  description = "Path to the public key used for ssh access"
+}
+variable image_id {
+  description = "Disk image"
+}
+variable subnet_id{
+  description = "Subnet"
+}
+variable service_account_key_file{
+  description = "key.json"
+}
+```
+Теперь можем использовать input переменные в определении
+других ресурсов. Чтобы получить значение пользовательской
+переменной внутри ресурса используется синтаксис `var.var_name`
+
+Определим соответствующие параметры ресурсов с помощью переменных в `main.tf`:
+```
+provider "yandex" {
+service_account_key_file = var.service_account_key_file
+cloud_id = var.cloud_id
+folder_id = var.folder_id
+zone = var.zone
+}
+```
+### Обратите внимание, что теперь для аутентификации используется ключ
+### сервисного аккаунта, а не токен. Вы можете передать значение как токена,
+### так и ключа сервисного аккаунта.
+```
+boot_disk {
+    initialize_params {
+      # Указать id образа созданного в предыдущем домашем задании
+      image_id = var.image_id
+    }
+  }
+
+  network_interface {
+    # Указан id подсети default-ru-central1-a
+    subnet_id = var.subnet_id
+    nat       = true
+  }
+
+  metadata = {
+  ssh-keys = "ubuntu:${file(var.public_key_path)}"
+  }
+```
+
+Задать значения переменных можно (и нужно) используя специальный файл
+`terraform.tfvars`, из которого тераформ загружает значения автоматически при
+каждом запуске. В директории `terraform` создайте файл `terraform.tfvars`, в
+котором определите ваши переменные. Это должно выглядеть примерно так:
+```
+cloud_id = "b1g7mh55020i2hpup3cj"
+folder_id = "b1g4871feed9nkfl3dnu"
+zone = "ru-central1-a"
+image_id = "fd8mmtvlncqsvkhto5s6"
+```
+Пересоздадим все ресурсы
+```
+terraform destroy
+terraform plan
+terraform apply
+```
+
+### Оформление
+Отформатируйте все конфигурационные файлы используя команду
+`terraform fmt`
+
+## Описание файлов
+main.tf - основной файл
+
+`папка files` - файлы скриптов и приложений
+
+`variables.tf` - объявление переменных, что есть такая переменная,
+пояснение к переменной (необязательно) и можно задать значение по умолчанию.
+
+`terraform.tfvars` - значения переменных
+
+`outputs.tf` - чтобы не смешивать выходные переменные с основной
+конфигурацией наших ресурсов (не писать их в файл `main.tf` файл),
+созданы в отдельном файле
