@@ -3,7 +3,7 @@ provider "yandex" {
   cloud_id                 = var.cloud_id
   folder_id                = var.folder_id
   zone                     = var.zone
-  #    version = "~> 0.35.0"
+  version = "~> 0.35.0"
 }
 
 resource "yandex_compute_instance" "app" {
