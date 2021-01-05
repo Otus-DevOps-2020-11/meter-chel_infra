@@ -2,7 +2,8 @@
 meter-chel Infra repository
 
 
-# Домашняя работа к лекции №5 Знакомство с облачной инфраструктурой и облачными сервисами
+# Домашняя работа к лекции №5
+# Знакомство с облачной инфраструктурой и облачными сервисами
 
 bastion_IP = 130.193.58.17
 someinternalhost_IP = 10.128.0.24
@@ -159,7 +160,8 @@ someinternalhost
 ```
 50 сертификатов на домен в неделю...```
 
-# Домашняя работа к лекции №6 Деплой тестового приложения
+# Домашняя работа к лекции №6
+# Деплой тестового приложения
 
 testapp_IP = 130.193.45.104
 testapp_port = 9292
@@ -263,7 +265,8 @@ apt-get install -y mongodb-org
 http://130.193.45.104:9292/
 
 
-# Домашняя работа к лекции №7 Сборка образов VM при помощи Packer
+# Домашняя работа к лекции №7
+# Сборка образов VM при помощи Packer
 
 ## создать и перейти в ветку packer-base
 `git checkout -b packer-base`
@@ -435,7 +438,9 @@ packer build -var-file=variables.json ubuntu16.json
 в папку files файл puma.service
 
 
-# Домашняя работа к лекции №8 Знакомство с Terraform (Terraform-1)
+# Домашняя работа к лекции №8
+# Знакомство с Terraform
+# (Terraform-1)
 
 создать и перейти в ветку terraform-1
 'git checkout -b terraform-1'
@@ -787,3 +792,240 @@ resource "yandex_compute_instance" "app" {
 создается с помощью `resource "yandex_lb_network_load_balancer" "app"`,
 описываются входящие порты и порты назначения, и целевая группа `attached_target_group` - фактически список адресов на которые будет производится переназначение.
 Формируется список адресов с помощью `resource "yandex_lb_target_group" "app_tg"` из указанной в `subnet_id` сети.
+
+
+# Домашняя работа к лекции №9
+# Принципы организации инфраструктурного кода и работа над инфраструктурой в команде на примере Terraform
+# (Terraform-2)
+
+создать и перейти в ветку terraform-2
+`git checkout -b terraform-2`
+
+
+# Возможность получать атрибуты другого ресурса
+
+Зададим IP для инстанса с приложением в виде внешнего ресурса. Для этого определим ресурсы `yandex_vpc_network` и `yandex_vpc_subnet` в конфигурационном файле `main.tf`.
+```
+resource "yandex_vpc_network" "app-network" {
+name = "reddit-app-network"
+}
+resource "yandex_vpc_subnet" "app-subnet" {
+name = "reddit-app-subnet"
+zone = "ru-central1-a"
+network_id = "${yandex_vpc_network.app-network.id}"
+v4_cidr_blocks = ["192.168.10.0/24"]
+}
+```
+Для того чтобы использовать созданный IP адрес в нашем ресурсе VM нам необходимо сослаться на атрибуты ресурса,
+который этот IP создает, внутри конфигурации ресурса VM. В конфигурации ресурса VM определите, IP адрес для создаваемого инстанса.
+```
+network_interface {
+subnet_id = yandex_vpc_subnet.app-subnet.id
+nat = true
+}
+```
+### В обоих случаях забирается `id` созданных ранее ресурсов
+
+Ссылку в одном ресурсе на атрибуты другого тераформ понимает как зависимость (не явную) одного ресурса от другого. Это влияет
+на очередность создания и удаления ресурсов при применении изменений.
+
+Terraform поддерживает также явную зависимость - используется параметр `depends_on`
+
+
+# Структуризация ресурсов
+
+## Несколько VM
+
+### Вынесем БД на отдельный инстанс VM.
+Для этого необходимо в директории packer, где содержатся ваши шаблоны для билда VM, создать два новых шаблона db.json и app.json.
+При помощи шаблона db.json должен собираться образ VM, содержащий установленную MongoDB.
+Шаблон app.json должен использоваться для сборки образа VM, с установленными Ruby.
+В качестве базового образа для создания образа возьмите ubuntu16.04.
+Для выполнения задания, нужно лишь скопировать и слегка подкорректировать уже имеющийся шаблон ubuntu16.json.
+
+### Создадим две VM
+Разобьем конфиг main.tf на несколько конфигов.
+Создадим файл app.tf, куда вынесем конфигурацию для VM с приложением.
+Пока пренебрежем провижинерами.
+```
+resource "yandex_compute_instance" "app" {
+name = "reddit-app"
+labels = {
+tags = "reddit-app"
+}
+resources {
+cores = 1
+memory = 2
+}
+boot_disk {
+initialize_params {
+image_id = var.app_disk_image
+}
+}
+network_interface {
+subnet_id = yandex_vpc_subnet.app-subnet.id
+nat = true
+}
+...
+}
+```
+
+Обратите внимание, что мы вводим новую переменную для образа приложения. Не забудьте объявить ее в `variables.tf` и задать в `terraform.tfvars`:
+```
+variable app_disk_image {
+description = "Disk image for reddit app"
+default = "reddit-app-base"
+}
+```
+### Аналогичные действия нужно сделать для файла `db`
+
+
+Создадим файл vpc.tf, в который вынесем кофигурацию сети и подсети, которое применимо для всех инстансов нашей сети.
+```
+resource "yandex_vpc_network" "app-network" {
+name = "app-network"
+}
+resource "yandex_vpc_subnet" "app-subnet" {
+name = "app-subnet"
+zone = "ru-central1-a"
+network_id = "${yandex_vpc_network.app-network.id}"
+v4_cidr_blocks = ["192.168.10.0/24"]
+}
+```
+В итоге, в файле main.tf должно остаться только определение провайдера:
+```
+provider "yandex" {
+service_account_key_file = var.service_account_key_file
+cloud_id = var.cloud_id
+folder_id = var.folder_id
+zone = var.zone
+}
+```
+Не забудьте добавить nat адреса инстансов в outputs переменные.
+```
+output "external_ip_address_app" {
+value = yandex_compute_instance.app.network_interface.0.nat_ip_address
+}
+output "external_ip_address_db" {
+value = yandex_compute_instance.db.network_interface.0.nat_ip_address
+}
+```
+Планируем и применяем изменения одной командой: `terraform apply`
+Если у вас все прошло успешно, можете проверить, что хосты доступны, и на них установлено необходимое ПО.
+Затем удалите созданные ресурсы, используя `terraform destroy`.
+
+# Модули
+Разбивая нашу конфигурацию нашей инфраструктуры на отдельные конфиг файлы, мы готовили для себя почву для работы
+с модулями. Внутри директории `terraform` создайте директорию `modules`, в которой мы будет определять модули.
+
+### DB module
+Внутри директории modules создайте директорию `db`, в которой создайте три привычных нам файла `main.tf`, `variables.tf`,
+`outputs.tf`. Скопируем содержимое `db.tf`, который мы создали ранее, в `modules/db/main.tf`. Затем определим переменные,
+которые у нас используются в `db.tf` и объявляются в `variables.tf` в файл переменных модуля `modules/db/variables.tf`
+
+### modules/db/variables.tf
+```
+variable public_key_path {
+description = "Path to the public key used for ssh access"
+}
+variable db_disk_image {
+description = "Disk image for reddit db"
+default = "reddit-db-base"
+}
+variable subnet_id {
+description = "Subnets for modules"
+}
+```
+### App module - аналогично DB module
+
+### Не забудем про в выходные переменные
+modules/app/outputs.tf
+```
+output "external_ip_address_app" {
+value = yandex_compute_instance.app.network_interface.0.nat_ip_address
+}
+```
+
+Прежде чем вызывать и проверять модули, для начала удалим `db.tf` и `app.tf`, а так же `vpc.tf` (Вместо него теперь используем переменные) в нашей директории, чтобы terraform перестал их использовать.
+В файл `main.tf`, где у нас определен провайдер вставим секции вызова созданных нами модулей.
+
+### main.tf
+```
+provider "yandex" {
+service_account_key_file = var.service_account_key_file
+cloud_id = var.cloud_id
+folder_id = var.folder_id
+zone = var.zone
+}
+module "app" {
+source = "./modules/app"
+public_key_path = var.public_key_path
+app_disk_image = var.app_disk_image
+subnet_id = var.subnet_id
+}
+module "db" {
+source = "./modules/db"
+public_key_path = var.public_key_path
+db_disk_image = var.db_disk_image
+subnet_id = var.subnet_id
+}
+```
+Чтобы начать использовать модули, нам нужно сначала их загрузить из указанного источника . В нашем случае источником модулей будет просто локальная папка на диске.
+Используем команду для загрузки модулей. В директории terraform: `terraform get`
+Модули будут загружены в директорию .terraform, в которой уже содержится провайдер
+
+### Получаем output переменные из модуля
+В созданном нами модуле app мы определили выходную переменную для внешнего IP инстанса.
+Чтобы получить значение этой переменной, переопределим ее:
+```
+output "external_ip_address_app" {
+value = module.app.external_ip_address_app
+}
+output "external_ip_address_db" {
+value = module.db.external_ip_address_db
+}
+```
+После применения конфигурации с помощью terraform apply в соответствии с нашей конфигурацией у нас должен быть SSH-доступ ко обоим инстансам
+
+# Переиспользование модулей
+Основную задачу, которую решают модули - это увеличивают переиспользуемость кода и помогают нам следовать принципу DRY.
+Инфраструктуру, которую мы описали в модулях, теперь можно использовать на разных стадиях нашего конвейера непрерывной поставки с необходимыми нам изменениями.
+Создадим инфраструктуру для двух окружений (`stage` и `prod`), используя созданные модули.
+
+В директории terrafrom создайте две директории: `stage` и `prod`.
+Скопируйте файлы `main.tf`, `variables.tf`, `outputs.tf`, `terraform.tfvars`, `key.json` из директории `terraform` в каждую из созданных директорий.
+Поменяйте пути к модулям в `main.tf` на `../modules/xxx` вместо `modules/xxx`.
+Инфраструктура в обоих окружениях будет идентична.
+
+### terraform/stage/main.tf
+```
+provider "yandex" {
+service_account_key_file = var.service_account_key_file
+cloud_id = var.cloud_id
+folder_id = var.folder_id
+zone = var.zone
+}
+module "app" {
+source = "../modules/app"
+public_key_path = var.public_key_path
+app_disk_image = var.app_disk_image
+subnet_id = var.subnet_id
+}
+module "db" {
+source = "../modules/db"
+public_key_path = var.public_key_path
+db_disk_image = var.db_disk_image
+subnet_id = var.subnet_id
+}
+```
+Проверьте правильность настроек инфраструктуры каждого окружения. Для этого нужно запустить terraform apply в каждом из них.
+Не забывайте удалять ресурсы после проверок.
+
+## Реестр модулей
+В сентябре 2017 компания HashiCorp запустила публичный реестр модулей для terraform .
+До этого модули можно было либо хранить либо локально, как мы делаем в этом ДЗ, либо забирать из Git, Mercurial или HTTP.
+На главной странице можно искать необходимые модули по названию и фильтровать по провайдеру.
+Модули бывают Verified и обычные. Verified это модули от HashiCorp и ее партнеров.
+
+
+# Задания со *
