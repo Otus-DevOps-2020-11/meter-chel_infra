@@ -1,6 +1,6 @@
 #!/bin/bash
-sleep 25
 set -e
+sleep 60
 APP_DIR=${1:-$HOME}
 sudo apt-get install -y git
 git clone -b monolith https://github.com/express42/reddit.git $APP_DIR/reddit
@@ -9,3 +9,8 @@ bundle install
 sudo mv /tmp/puma.service /etc/systemd/system/puma.service
 sudo systemctl start puma
 sudo systemctl enable puma
+echo
+echo
+ps aux | grep puma
+echo "--- ############## Check running Puma: ${0}"
+echo

@@ -1,0 +1,42 @@
+{
+
+"variables": {
+          "folder_id": "b1g8qs73g2ddsu4dvpna",
+          "source_image_id": "fd8ta4gig2abe01fghvj"
+        },
+
+    "builders": [
+        {
+            "type": "yandex",
+            "service_account_key_file": "{{ user `service_account_key_file` }}",
+            "folder_id": "{{ user `folder_id`}}",
+            "source_image_family": "{{ user `source_image_family`}}",
+            "source_image_id": "{{ user `source_image_id`}}",
+            "image_name": "reddit-db-base-{{timestamp}}",
+            "image_family": "reddit-db-base",
+            "ssh_username": "ubuntu",
+            "use_ipv4_nat": "true",
+            "platform_id": "standard-v1",
+            "disk_name": "{{ user `disk_app_name` }}",
+            "disk_type": "{{ user `network-hdd` }}",
+            "disk_size_gb": 15 ,
+            "instance_mem_gb": 2 ,
+            "metadata": {
+                        "serial-port-enable": "1"
+                        }
+        }
+    ],
+    "provisioners": [
+        {
+            "type": "shell",
+            "inline": [
+				"sleep 30"
+		    ]
+        },
+        {
+            "type": "shell",
+            "script": "scripts/install_mongodb.sh",
+            "execute_command": "sudo {{.Path}}"
+        }
+    ]
+}
