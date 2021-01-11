@@ -96,7 +96,7 @@ EOF
 ```
 pritunl setup-key
 ```
-1ffddabf025d4761921096c348b3f088 - полученный ключ в строку ввода
+xxxxxxxxxxxxxxxxxxxxxxxx - полученный ключ в строку ввода
 
 адрес: `mongodb://localhost:27017/pritunl`
 
@@ -109,7 +109,7 @@ password: "Y9RjnMR7TphT"
 После появилась форма смены имени и пароля, оставил старые
 
 Добавил организацию `meter-otus`
-Добавил пользователя `test` с PIN 6214157507237678334670591556762
+Добавил пользователя `test` с PIN yyyyyyyyyyyyyyyyyyyyyyy
 Добавил сервер `meterVPN` порт `14608 udp Virtual Network 192.168.235.0/24` и привязал его к организации meter-otus
 
 Скачал конфигурационный файл meter-otus_test_meterVPN.ovpn
@@ -122,7 +122,7 @@ apt install openvpn
 
 openvpn --config meter-otus_test_meterVPN.ovpn
 ```
-логин test пароль 6214157507237678334670591556762```
+логин test пароль yyyyyyyyyyyyyyyyyyyyyy```
 
 `ssh -i ~/.ssh/id_rsa meter@10.128.0.24`
 
@@ -185,7 +185,7 @@ exec -l $SHELL
 https://cloud.yandex.ru/docs/cli/operations/profile/profile-create
 
 токен
-AgAAAABKx-eaAATuwd9nKf9Wy0clsNmFjQQWXJM
+zzzzzzz-zzzzzzzzzzzzzzzzzz
 
 настройка профиля
 ```
@@ -1028,4 +1028,301 @@ subnet_id = var.subnet_id
 Модули бывают Verified и обычные. Verified это модули от HashiCorp и ее партнеров.
 
 
-# Задания со *
+# Домашняя работа к лекции №10
+# Знакомство с Ansible (ansible-1)
+
+## Ansible, установка и настройка клиента на рабочую машину
+Работа в Ansible гарантирована в Linux/Unix машинах и в подситеме WSL Windows 10.
+Для работоспособности Ansible требуется установить Python
+
+Добейтесь установки Python 2.7 и/или проверьте что
+установлена нужная версия
+`python --version`
+
+Рекомендуется также поставить пакетный менеджер pip или easy_install
+
+Любым из пакетных менеджеров установите ansible, примеры:
+```
+pip install -r requirements.txt
+pip install ansible>=2.4
+easy_install `cat requirements.txt`
+```
+Проверяем, что Ansible установлен:
+```
+ansible --version
+ansible 2.4.x.x
+```
+
+### Ansible управляет инстансами виртуальных машин (c Linux ОС) используя SSH-соединение.
+### Поэтому для управление инстансом при помощи Ansible нам нужно убедиться, что мы можем подключиться к нему по SSH.
+### Для управления хостами при помощи Ansible на них также должен быть установлен Python
+
+Для далнейшей работы потребуются две VM, ноапример из предыдущего задания
+
+Хосты и группы хостов, которыми Ansible должен управлять, описываются в инвентори-файле.
+имя инвентори-файла задается в ancible.cfg или в команде вызова после ключа -i
+
+Создадим инвентори файл inventory, в котором укажем информацию о созданном инстансе приложения и параметры подключения к нему по SSH:
+```
+например
+appserver ansible_host=35.195.186.154 ansible_user=appuser ansible_private_key_file=~/.ssh/appuser
+```
+где appserver - краткое имя, которое идентифицирует данный хост.
+Обратите внимание, что это должна быть одна строка в файле inventory
+
+
+### Убедимся, что Ansible может управлять нашим хостом.
+Используем команду ansible для вызова модуля ping из командной строки.
+
+`ansible appserver -i ./inventory -m ping`
+
+Ping-модуль позволяет протестировать SSH-соединение, при этом ничего не изменяя на самом хосте.
+```
+-m ping - вызываемый модуль
+-i ./inventory - путь до файла инвентори
+appserver - Имя хоста, которое указали в инвентори, откуда Ansible yзнает, как подключаться к хосту
+```
+вывод команды:
+```
+appserver | SUCCESS => {
+"changed": false,
+"ping": "pong"
+}
+```
+Повторите такую же процедуру для инстанса БД
+
+Для того чтобы управлять инстансами нам приходится вписывать много данных в наш инвентори файл.
+К тому же, чтобы использовать данный инвентори, нам приходится каждый раз указывать его явно, как опцию команды ansible.
+Многое из этого мы можем определить в конфигурации Ansible.
+Для того чтобы настроить Ansible под нашу работу, создадим конфигурационный файл для него `ansible.cfg`.
+
+### ansible.cfg:
+```
+[defaults]
+inventory = ./inventory
+remote_user = appuser
+private_key_file = ~/.ssh/appuser
+host_key_checking = False
+retry_files_enabled = False
+```
+
+Теперь можно удалить избыточную информацию из файла `inventory` и использовать значения по умолчанию:
+
+### inventory:
+```
+appserver ansible_host=35.195.74.54
+dbserver ansible_host=35.195.162.174
+```
+
+Используем модуль `command`, который позволяет запускать произвольные команды на удаленном хосте.
+Выполним команду uptime для проверки времени работы инстанса.
+Команду передадим как аргумент для данного модуля, использовав опцию -a:
+`ansible dbserver -m command -a uptime`
+
+## Работа с группами хостов
+Управлять при помощи Ansible отдельными хостами становится неудобно, когда этих хостов становится более одного.
+В инвентори файле мы можем определить группу хостов для управления конфигурацией сразу нескольких хостов.
+Список хостов указывается под названием группы, каждый новый хост указывается в новой строке.
+В нашем случае, каждая группа будет включать в себя всего один хост.
+Сейчас мы определим группы хостов в инвентори файле
+
+### inventory:
+```
+[app] #  Это название группы
+appserver ansible_host=35.195.74.54 # Cписок хостов в данной группе
+
+[db]
+dbserver ansible_host=35.195.162.174
+```
+
+Теперь мы можем управлять не отдельными хостами, а целыми группами, ссылаясь на имя группы:
+```
+ansible app -m ping
+
+appserver | SUCCESS => {
+"changed": false,
+"ping": "pong"
+}
+```
+Параметры:
+```
+app - имя группы
+-m ping - имя модуля Ansible
+appserver - имя сервера в группе, для которого применился модуль
+```
+
+## Начиная с Ansible 2.4 появилась возможность использовать YAML для inventory.
+Создадим файл `inventory.yml` и перенесем в него записи из имеющегося inventory.
+### В файле `ancible.cfg` нужно исправить имя конфигурационного файла!
+
+### inventory.yml
+```
+app:
+  hosts:
+    appserver:
+      ansible_host: 35.190.196.109
+
+db:
+  hosts:
+    dbserver:
+      ansible_host: 104.155.9.218
+```
+
+`ansible all -m ping -i inventory.yml`
+
+Ключ `-i` переопределяет путь к инвентори файлу
+```
+dbserver | SUCCESS => {
+"changed": false,
+"ping": "pong"
+}
+appserver | SUCCESS => {
+"changed": false,
+"ping": "pong"
+}
+```
+## Выполнение команд
+
+Из проедыдущего задания: на app-сервере у нас пакером при билде установлен ruby.
+А на db-сервер установлена MongoDB.
+Попробуем не заходя на хосты, проверить наличие необходимых компонентов в созданном окружении.
+
+### Проверим, что на app сервере установлены компоненты для работы приложения (`ruby` и `bundler`):
+
+`ansible app -m command -a 'ruby -v'`
+```
+appserver | SUCCESS | rc=0 >>
+ruby 2.3.1p112 (2016-04-26) [x86_64-linux-gnu]
+```
+`ansible app -m command -a 'bundler -v'`
+```
+appserver | SUCCESS | rc=0 >>
+Bundler version 1.11.2
+```
+
+А теперь попробуем указать две команды модулю command:
+`ansible app -m command -a 'ruby -v; bundler -v'`
+```
+appserver | FAILED | rc=1 >>
+ruby: invalid option -; (-h will show valid options) (RuntimeError)non-zero
+return code
+```
+В то же время модуль shell успешно отработает:
+`ansible app -m shell -a 'ruby -v; bundler -v'`
+```
+appserver | SUCCESS | rc=0 >>
+ruby 2.3.1p112 (2016-04-26) [x86_64-linux-gnu]
+Bundler version 1.11.2
+```
+### Модуль command выполняет команды, не используя оболочку (sh, bash), поэтому в нем не работают перенаправления потоков и нет доступа к некоторым переменным окружения.
+
+Проверим на хосте с БД статус сервиса MongoDB с помощью модуля `command` и `shell`.
+(Эта операция аналогична запуску на хосте команды `systemctl status mongod`):
+
+`ansible db -m command -a 'systemctl status mongod'`
+```
+dbserver | SUCCESS | rc=0 >>
+● mongod.service - High-performance, schema-free document-oriented database
+```
+`ansible db -m shell -a 'systemctl status mongod'`
+```
+dbserver | SUCCESS | rc=0 >>
+● mongod.service - High-performance, schema-free document-oriented database
+```
+
+А можем выполнить ту же операцию используя модуль `systemd`, который предназначен для управления сервисами:
+`ansible db -m systemd -a name=mongod`
+```
+dbserver | SUCCESS => {
+"changed": false,
+"name": "mongod",
+"status": {
+"ActiveState": "active", ...
+```
+
+Или с помощью модуля `service`, который более универсален и будет работать и в более старых ОС с `init.d`-инициализацией:
+`ansible db -m service -a name=mongod`
+```
+dbserver | SUCCESS => {
+"changed": false,
+"name": "mongod",
+"status": {
+"ActiveState": "active", ...
+```
+
+На предыдущем примере с проверкой состояния сервиса можно увидеть преимущества использования модуля вместо запуска shell-команд.
+Модуль возвращает в качестве ответа набор переменных, которые можно легко использовать для проверки в дальнейшем коде.
+Например `status.ActiveState` содержит состояние сервиса.
+А для shell-команд нужно будет реализовывать проверку с помощью регулярных выражений, кодов возврата и других сложных и ненадежных решений.
+
+Используем модуль git для клонирования репозитория с
+приложением на app сервер:
+
+`ansible app -m git -a 'repo=https://github.com/express42/reddit.git dest=/home/appuser/reddit'`
+```
+appserver | SUCCESS => {
+"after": "61a7f75b3d3e6f7a8f279896fb4e9f0556e1a70a",
+"before": null,
+"changed": true
+}
+```
+`ansible app -m git -a 'repo=https://github.com/express42/reddit.git dest=/home/appuser/reddit'`
+```
+appserver | SUCCESS => {
+"after": "61a7f75b3d3e6f7a8f279896fb4e9f0556e1a70a",
+"before": "5c217c565c1122c5343dc0514c116ae816c17ca2",
+"changed": false,
+"remote_url_changed": false
+}
+```
+
+Как мы видим, повторное выполнение этой команды проходит успешно, только переменная `changed` будет false (что значит, что изменения не произошли)
+
+И попробуем сделать то же самое с модулем `command`:
+
+`ansible app -m command -a 'git clone https://github.com/express42/reddit.git /home/appuser/reddit'`
+```
+appserver | SUCCESS | rc=0 >>
+Cloning into '/home/appuser/reddit'...
+```
+`ansible app -m command -a \`
+```
+'git clone https://github.com/express42/reddit.git /home/appuser/reddit'
+appserver | FAILED | rc=128 >>
+fatal: destination path '/home/appuser/reddit' already exists and is not
+an empty directory. non-zero return code
+```
+А в этом примере, повторное выполнение завершается ошибкой.
+
+Реализуем простой плейбук, который выполняет аналогичные предыдущему слайду действия (клонирование репозитория).
+Создайте файл `clone.yml`
+```
+- name: Clone
+hosts: app
+tasks:
+- name: Clone repo
+git:
+repo: https://github.com/express42/reddit.git
+dest: /home/appuser/reddit
+```
+И выполните: `ansible-playbook clone.yml`
+Результат примерно такой:
+```
+PLAY RECAP
+***************************************************************************
+appserver : ok=2 changed=0 unreachable=0 failed=0
+```
+Теперь выполните `ansible app -m command -a 'rm -rf ~/reddit'` и проверьте еще раз выполнение плейбука.
+
+### Команда `ansible app -m command -a 'rm -rf ~/reddit'` удалила папку  `~/reddit` и при выполнении плейбука `clone.yml` ansible внес изменения - создал папку заново
+
+Результат был такой:
+```
+PLAY RECAP
+***************************************************************************
+appserver : ok=2 changed=1 unreachable=0 failed=0
+```
+
+## Задание со *
+файл inventory.json создал в него прописал адреса VM (возможно придется добавить секцию all),
+написать файл конфигурации на Python который его распарсит не смог, ибо не знаток пайтона.
