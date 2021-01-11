@@ -96,7 +96,7 @@ EOF
 ```
 pritunl setup-key
 ```
-1ffddabf025d4761921096c348b3f088 - полученный ключ в строку ввода
+xxxxxxxxxxxxxxxxxxxxxxxx - полученный ключ в строку ввода
 
 адрес: `mongodb://localhost:27017/pritunl`
 
@@ -109,7 +109,7 @@ password: "Y9RjnMR7TphT"
 После появилась форма смены имени и пароля, оставил старые
 
 Добавил организацию `meter-otus`
-Добавил пользователя `test` с PIN 6214157507237678334670591556762
+Добавил пользователя `test` с PIN yyyyyyyyyyyyyyyyyyyyyyy
 Добавил сервер `meterVPN` порт `14608 udp Virtual Network 192.168.235.0/24` и привязал его к организации meter-otus
 
 Скачал конфигурационный файл meter-otus_test_meterVPN.ovpn
@@ -122,7 +122,7 @@ apt install openvpn
 
 openvpn --config meter-otus_test_meterVPN.ovpn
 ```
-логин test пароль 6214157507237678334670591556762```
+логин test пароль yyyyyyyyyyyyyyyyyyyyyy```
 
 `ssh -i ~/.ssh/id_rsa meter@10.128.0.24`
 
@@ -185,7 +185,7 @@ exec -l $SHELL
 https://cloud.yandex.ru/docs/cli/operations/profile/profile-create
 
 токен
-AgAAAABKx-eaAATuwd9nKf9Wy0clsNmFjQQWXJM
+zzzzzzz-zzzzzzzzzzzzzzzzzz
 
 настройка профиля
 ```
