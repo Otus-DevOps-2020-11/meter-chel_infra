@@ -795,8 +795,8 @@ resource "yandex_compute_instance" "app" {
 
 
 # Домашняя работа к лекции №9
-# Принципы организации инфраструктурного кода и работа над инфраструктурой в команде на примере Terraform
-# (Terraform-2)
+Принципы организации инфраструктурного кода и работа над инфраструктурой в команде на примере Terraform
+## (Terraform-2)
 
 создать и перейти в ветку terraform-2
 `git checkout -b terraform-2`
@@ -1324,5 +1324,37 @@ appserver : ok=2 changed=1 unreachable=0 failed=0
 ```
 
 ## Задание со *
-файл inventory.json создал в него прописал адреса VM (возможно придется добавить секцию all),
-написать файл конфигурации на Python который его распарсит не смог, ибо не знаток пайтона.
+
+файл `inventory.json` создал скриптом inventory.sh,
+в `inventory.sh` ip адреса инстансов ВМ получаются с помощью `yc compute instances list`
+
+`inventory.json` должен выглядеть примерно так:
+```
+{
+ "all": {
+  "hosts": {
+         "130.193.51.131",
+"178.154.226.138"
+           }
+   },
+ "app": {
+  "hosts": {
+         "130.193.51.131"
+           }
+   },
+ "db": {
+  "hosts": {
+         "178.154.226.138"
+           }
+   },
+}
+```
+
+в `ansible.cfg` внесены изменения
+```
+inventory = ./inventory.json
+
+[inventory]
+enable_plugins = yaml
+```
+команда  `ansible all -m ping` выдает ответ о доступности хостов
