@@ -1,0 +1,4 @@
+[db]
+dbserver ansible_host=${db-extip}
+[app]
+appserver ansible_host=${app-extip} db_address=${db-extip}

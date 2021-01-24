@@ -1,8 +1,8 @@
 resource "yandex_compute_instance" "db" {
-    name = "reddit-db"
+    name = "reddit-db-ansible"
     platform_id               = "standard-v2"
     labels = {
-              tags = "reddit-db"
+              tags = "reddit-db-ansible"
              }
 
   resources {
@@ -34,8 +34,8 @@ resource "yandex_compute_instance" "db" {
     private_key = file(var.private_key_path)
   }
 
-  provisioner "remote-exec" {
-    script = "../files/install_mongodb.sh"
-  }
+#  provisioner "remote-exec" {
+#    script = "${path.module}/files/install_mongodb.sh"
+#  }
 
 }

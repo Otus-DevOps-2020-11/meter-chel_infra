@@ -1,0 +1,16 @@
+---
+- name: install ruby
+  hosts: all
+  become: true
+
+  tasks:
+    - name: install ruby
+      package:
+        name:
+          - ruby-full
+          - ruby-bundler
+          - build-essential
+        update_cache: yes
+        force_apt_get: yes
+        state: present
+      register: result
