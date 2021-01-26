@@ -104,7 +104,7 @@ xxxxxxxxxxxxxxxxxxxxxxxx - полученный ключ в строку вво�
 
 ```
 username: "pritunl"
-password: "Y9RjnMR7TphT"
+password: "------------"
 ```
 После появилась форма смены имени и пароля, оставил старые
 
@@ -285,7 +285,7 @@ echo $PATH
 Получите ваш folder-id - ID каталога в Yandex.Cloud:
 `yc config list`
 
-token: AgAAAABKx-eaAATuwd9nKf9Wy0clsNmFjQQWXJM
+token: XXXXXXX-xxxxxxxxxxxxxxxxxxxx
 cloud-id: 111111111111111111111
 folder-id: 222222222222222222
 compute-default-zone: ru-central1-c
@@ -343,7 +343,7 @@ MongoDB из предыдущего ДЗ, определим два провиж
 	{
 	    "type": "yandex",
 	    "service_account_key_file": "/root/key.json",
-	    "folder_id": "b1g09rkrom55eupsmgpm",
+	    "folder_id": "--------------------",
 	    "source_image_family": "ubuntu-1604-lts",
 	    "image_name": "reddit-base-{{timestamp}}",
 	    "image_family": "reddit-base",
@@ -438,9 +438,8 @@ packer build -var-file=variables.json ubuntu16.json
 в папку files файл puma.service
 
 
-# Домашняя работа к лекции №8
+# Домашняя работа к лекции №8 (Terraform-1)
 # Знакомство с Terraform
-# (Terraform-1)
 
 создать и перейти в ветку terraform-1
 'git checkout -b terraform-1'
@@ -513,13 +512,13 @@ resource "yandex_compute_instance" "app" {
   boot_disk {
     initialize_params {
       # Указать id образа созданного в предыдущем домашем задании
-      image_id = "fd8fg4r8mrvoq6q2ve76"
+      image_id = "xxxxxxxxxxxxxxxxxxxx"
     }
   }
 
   network_interface {
     # Указан id подсети default-ru-central1-a
-    subnet_id = "e9bem33uhju28r5i7pnu"
+    subnet_id = "zzzzzzzzzzzzzzzzzz"
     nat       = true
   }
 
@@ -629,7 +628,7 @@ script = "files/deploy.sh"
 Определим параметры подключения провиженеров к VM.
 Внутрь ресурса VM, перед определением провижинеров, добавьте
 следующую секцию :
-
+```
 connection {
   type = "ssh"
   host = yandex_compute_instance.app.network_interface.0.nat_ip_address
@@ -638,7 +637,7 @@ connection {
   # путь до приватного ключа
   private_key = file("~/.ssh/id_rsa")
   }
-
+```
 В данном примере мы указываем, что провижинеры, определенные в ресурсе VM,
 должны подключаться к созданной VM по SSH, используя для подключения приватный
 ключ пользователя
@@ -660,7 +659,7 @@ Terraform предлагает команду `taint`, которая позво
 # yandex_compute_instance.app is tainted, so must be replaced
 -/+ resource "yandex_compute_instance" "app" {
 ~ created_at = "2020-04-08T08:19:56Z" -> (known after apply)
-~ folder_id = "b1g4871feed9nkfl3dnu" -> (known after apply)
+~ folder_id = "------------------" -> (known after apply)
 ```
 -/+ означает, что ресурс будет удален и создан вновь.
 
@@ -749,10 +748,10 @@ boot_disk {
 каждом запуске. В директории `terraform` создайте файл `terraform.tfvars`, в
 котором определите ваши переменные. Это должно выглядеть примерно так:
 ```
-cloud_id = "b1g7mh55020i2hpup3cj"
-folder_id = "b1g4871feed9nkfl3dnu"
+cloud_id = "xxxxxxxxxxxxxxxxx"
+folder_id = "yyyyyyyyyyyyyyyyyy"
 zone = "ru-central1-a"
-image_id = "fd8mmtvlncqsvkhto5s6"
+image_id = "zzzzzzzzzzzzzzzzzzzz"
 ```
 Пересоздадим все ресурсы
 ```
@@ -794,9 +793,8 @@ resource "yandex_compute_instance" "app" {
 Формируется список адресов с помощью `resource "yandex_lb_target_group" "app_tg"` из указанной в `subnet_id` сети.
 
 
-# Домашняя работа к лекции №9
+# Домашняя работа к лекции №9 (Terraform-2)
 Принципы организации инфраструктурного кода и работа над инфраструктурой в команде на примере Terraform
-## (Terraform-2)
 
 создать и перейти в ветку terraform-2
 `git checkout -b terraform-2`
@@ -972,7 +970,8 @@ subnet_id = var.subnet_id
 ```
 Чтобы начать использовать модули, нам нужно сначала их загрузить из указанного источника . В нашем случае источником модулей будет просто локальная папка на диске.
 Используем команду для загрузки модулей. В директории terraform: `terraform get`
-Модули будут загружены в директорию `.terraform`, в которой уже содержится провайдер
+Модули будут загружены в директорию `.terraform`, в которой уже содержится провайдер.
+ЗАМЕЧАНИЕ: `terraform get`своеобразная регистрация модулей и в директории `.terraform` записывается только путь до них, если модуль изменяется то изменения учитываются, а вот если изменяется путь до модуля, то нужно снова его регистрировать командой `terraform get`.
 
 ### Получаем output переменные из модуля
 В созданном нами модуле app мы определили выходную переменную для внешнего IP инстанса.
@@ -1028,8 +1027,8 @@ subnet_id = var.subnet_id
 Модули бывают Verified и обычные. Verified это модули от HashiCorp и ее партнеров.
 
 
-# Домашняя работа к лекции №10
-# Знакомство с Ansible (ansible-1)
+# Домашняя работа к лекции №10 (ansible-1)
+# Знакомство с Ansible
 
 ## Ansible, установка и настройка клиента на рабочую машину
 Работа в Ansible гарантирована в Linux/Unix машинах и в подситеме WSL Windows 10.
@@ -1358,3 +1357,282 @@ inventory = ./inventory.json
 enable_plugins = yaml
 ```
 команда  `ansible all -m ping` выдает ответ о доступности хостов
+
+
+# Домашняя работа к лекции №11 (Ansible-2)
+# Продолжение знакомства с Ansible: templates, handlers, dynamic inventory, vault, tags
+
+## Создадим плейбук 'reddit_app_one_play.yml' таким образом, чтобы получился один play c множеством tasks с tags.
+```
+---
+- name: Configure hosts & deploy application
+  hosts: all
+  vars:
+    mongo_bind_ip: 0.0.0.0
+    db_host: 192.168.100.24
+  tasks:
+    - name: Change mongo config file
+      become : true
+      template:
+        src : templates/mongod.conf.j2
+        dest: /etc/mongod.conf
+        mode: 0644
+      tags: db-tag
+      notify: restart mongod
+
+    - name: Install git
+      become: true
+      package:
+        name:
+          - git
+          - ruby
+          - bundler
+        state: present
+        update_cache: yes
+      tags: deploy-tag
+
+    - name: Add unit file for Puma
+      become : true
+      copy:
+        src: files/puma.service
+        dest: /etc/systemd/system/puma.service
+      tags: app-tag
+      notify: reload puma
+
+    - name: Add config for DB connection
+      become : true
+      template:
+        src : templates/db_config.j2
+        dest: /home/ubuntu/db_config
+        owner: ubuntu
+        group: ubuntu
+      tags: app-tag
+
+    - name: enable puma
+      become : true
+      systemd: name=puma enabled=yes
+      tags: app-tag
+
+    - name: Fetch the latest version of application code
+      git:
+        repo: https://github.com/express42/reddit.git
+        dest: /home/ubuntu/reddit
+        version: monolith
+      tags: deploy-tag
+      notify: reload puma
+
+    - name: Bundle install
+      bundler:
+        state: present
+        chdir: /home/ubuntu/reddit
+      tags: deploy-tag
+
+  handlers:
+  - name: restart mongod
+    become : true
+    service: name=mongod state=restarted
+  - name: reload puma
+    become : true
+    service: name=puma state=restarted
+```
+чтобы работать с таким playbook'jv необходимы команды следующего вида:
+```
+ansible-playbook reddit_app_one_play.yml --limit db --tags db-tag
+ansible-playbook reddit_app_one_play.yml --limit app --tags app-tag
+ansible-playbook reddit_app_one_play.yml --limit app --tags deploy-tag
+```
+также можно использовать ключ `--check` для выполнения сценария без его применения.
+
+## Один плейбук, несколько сценариев
+Создадим плейбук 'reddit_app_multiple_plays.yml' таким образом, чтобы получился несколько play.
+```
+---
+- name: Configure MongoDB
+  hosts: db
+  become : true
+  tags:
+   - db-tag
+  vars:
+    mongo_bind_ip: 0.0.0.0
+  tasks:
+    - name: Change mongo config file
+      template:
+        src : templates/mongod.conf.j2
+        dest: /etc/mongod.conf
+        mode: 0644
+      notify: restart mongod
+  handlers:
+  - name: restart mongod
+    service: name=mongod state=restarted
+
+- name: Configure hosts & deploy application
+  hosts: app
+  tags:
+   - app-tag
+  vars:
+    db_host: 192.168.100.7
+  become : true
+  tasks:
+    - name: Add unit file for Puma
+      copy:
+        src: files/puma.service
+        dest: /etc/systemd/system/puma.service
+      tags: app-tag
+      notify: reload puma
+
+    - name: Add config for DB connection
+      template:
+        src : templates/db_config.j2
+        dest: /home/ubuntu/db_config
+        owner: ubuntu
+        group: ubuntu
+
+    - name: Install git
+      become: true
+      package:
+        name:
+          - git
+          - ruby
+          - bundler
+        state: present
+        update_cache: yes
+      tags: deploy-tag
+
+    - name: enable puma
+      become : true
+      systemd: name=puma enabled=yes
+      tags: app-tag
+
+    - name: Fetch the latest version of application code
+      git:
+        repo: https://github.com/express42/reddit.git
+        dest: /home/ubuntu/reddit
+        version: monolith
+      tags: deploy-tag
+      notify: reload puma
+
+    - name: Bundle install
+      bundler:
+        state: present
+        chdir: /home/ubuntu/reddit
+      tags: deploy-tag
+
+    - name: enable puma
+      systemd: name=puma enabled=yes
+
+  handlers:
+  - name: reload puma
+    become : true
+    service: name=puma state=restarted
+```
+чтобы работать с таким playbook'ом необходимы команды следующего вида:
+```
+ansible-playbook reddit_app_multiple_plays.yml --tags db-tag
+ansible-playbook reddit_app_multiple_plays.yml --tags app-tag
+ansible-playbook reddit_app_multiple_plays.yml --tags deploy-tag
+```
+Таким playbook'ом проще управлять, так как не надо запоминать к какой группе серверов относится тег.
+
+# Несколько плейбуков
+Разделим предыдущий playbook на несколько плейбуков (app.yml, db.yml, deploy_app.yml)
+В файле site.yml перечислим все файлы с playbook.
+```
+---
+- import_playbook: db.yml
+- import_playbook: app.yml
+- import_playbook: deploy.yml
+```
+теперь можно одним файлом запустить все сценарии
+Проверка и запуск
+```
+ansible-playbook site.yml --check
+ansible-playbook site.yml
+```
+
+## Провижининг в Packer
+
+Необходимо заменить провиженеры в Packer с shell на ansible.
+```
+    "provisioners": [
+        {
+            "type": "ansible",
+            "user": "ubuntu",
+            "playbook_file": "../ansible/packer_app.yml"
+        }
+    ]
+```
+без параметра user выдавал ошибку доступа
+
+Создал файлы, вместо install_ruby.sh и install_mongodb.sh:
+ansible/packer_app.yml - устанавливает Ruby и Bundler
+ansible/packer_db.yml - добавляет репозиторий MongoDB, устанавливает ее и включает сервис.
+
+## Проверка
+
+### Создать образы packer
+
+Перейти в каталог packer и выполнить команды в терминале
+```
+packer build -var-file=variables.json app.json
+packer build -var-file=variables.json db.json
+```
+Будут созданы образы в YC, 'reddit-app-ansible' и 'reddit-db-ansible'
+ (в файлах packer к имени образа можно добавить '-{{timestamp}}', чтобы каждый раз оно было разным и образ не нужно было удалять при повторном запуске сборки образа).
+
+### Создать ВМ
+
+Перейти в каталог terraform/stage и выполнить команду в терминале
+```
+terraform init
+terraform plan
+terraform apply
+```
+На основе созданных образов будут созданы 2 ВМ в YC.
+
+## Деплой приложения
+
+Заменить IP ВМ на актуальные в файлах inventory.yml и в app.yml заменить значение переменной *db_host* на актуальный внутренний адрес ВМ с базой данных
+Перейти в директорию ansible и выполнить команду в терминале
+```
+ansible-playbook site.yml
+```
+
+В результате приложение будет доступно по адресу <Внешний IP>:9292
+
+
+# Задания со *
+
+1. Добавил в outputs.tf
+```
+
+resource "local_file" "AnsibleInventory" {
+ content = templatefile("inventory.tmpl",
+ {
+  app-extip = module.app.external_ip_address_app,
+  db-extip = module.db.external_ip_address_db,
+ }
+ )
+ filename = "../../ansible/inventory.ini"
+}
+```
+2. Добавил шаблон 'inventory.tmpl' для формирования файла inventory.ini
+```
+[db]
+dbserver ansible_host=${db-extip}
+[app]
+appserver ansible_host=${app-extip} db_address=${db-extip}
+```
+
+3. Переменную db_host (app.yml) берем из inventory файла (inventory.ini) - создается динамически)
+```
+vars:
+   db_host: "{{ db_address }}"
+```
+4. В 'ansible.cfg' нужно внести изменения
+```
+[defaults]
+inventory = ./inventory.ini
+
+[inventory]
+enable_plugins = ini
+```

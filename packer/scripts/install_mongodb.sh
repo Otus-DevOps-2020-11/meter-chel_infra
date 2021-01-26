@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 echo "--- MongoDB: ${0} script START"
+apt list --upgradable
 apt update
 apt install apt-transport-https ca-certificates
 wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | sudo apt-key add -
@@ -8,6 +9,11 @@ apt update
 apt install -y mongodb-org
 systemctl start mongod
 systemctl enable mongod
+echo
+echo
+echo
 systemctl status mongod --no-pager
 echo "--- ############## Check running MongoDB: ${0}"
+echo
+echo
 exit 0

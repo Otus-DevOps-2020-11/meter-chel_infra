@@ -3,8 +3,9 @@
         {
             "type": "yandex",
             "service_account_key_file": "{{ user `service_account_key_file` }}",
-            "folder_id": "{{ user `folder_id` }}",
+            "folder_id": "{{ user `folder_id`}}",
             "source_image_family": "{{ user `source_image_family`}}",
+            "source_image_id": "{{ user `source_image_id`}}",
             "image_name": "reddit-base-{{timestamp}}",
             "image_family": "reddit-base",
             "ssh_username": "ubuntu",
@@ -12,10 +13,18 @@
             "platform_id": "standard-v1",
             "disk_name": "{{ user `disk_name` }}",
             "disk_type": "{{ user `network-hdd` }}",
-            "disk_size_gb": "{{ user `disk_size_gb` }}"
+            "disk_size_gb": 15 ,
+            "instance_mem_gb": 2 ,
+            "metadata": {"serial-port-enable": "1"}
         }
     ],
     "provisioners": [
+        {
+            "type": "shell",
+            "inline": [
+				"sleep 60"
+		    ]
+        },
         {
             "type": "shell",
             "script": "scripts/install_ruby.sh",

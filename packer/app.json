@@ -1,18 +1,11 @@
 {
-
-"variables": {
-          "folder_id": "b1g8qs73g2ddsu4dvpna",
-          "source_image_id": "fd8ta4gig2abe01fghvj"
-        },
-
     "builders": [
         {
             "type": "yandex",
             "service_account_key_file": "{{ user `service_account_key_file` }}",
             "folder_id": "{{ user `folder_id`}}",
             "source_image_family": "{{ user `source_image_family`}}",
-            "source_image_id": "{{ user `source_image_id`}}",
-            "image_name": "reddit-app-base-{{timestamp}}",
+            "image_name": "reddit-app-ansible",
             "image_family": "reddit-app-base",
             "ssh_username": "ubuntu",
             "use_ipv4_nat": "true",
@@ -26,15 +19,9 @@
     ],
     "provisioners": [
         {
-            "type": "shell",
-            "inline": [
-				"sleep 30"
-		    ]
-        },
-        {
-            "type": "shell",
-            "script": "scripts/install_ruby.sh",
-            "execute_command": "sudo {{.Path}}"
+            "type": "ansible",
+            "user": "ubuntu",
+            "playbook_file": "../ansible/packer_app.yml"
         }
     ]
 }

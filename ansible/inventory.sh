@@ -1,45 +1,19 @@
 #!/bin/bash
 
-printf '{' > ./inventory.json
-#printf '\n\t"_meta": {\n\t\t"hosts": {\n\t\t\t"hostvars": {}\n\t\t}\n\t},' >> ./inventory.json
+for group in app db
+    do
+    str="  "$group:' {\n        "hosts": {\n         '
+    ip=`yc compute instances list | grep ${group} | grep -v "EXTERNAL IP" | awk -F\| '{print $6}'`
 
-printf '\n "all": {\n  "hosts": {\n         '>> ./inventory.json
-str=" "
-ip=`yc compute instances list | grep "reddit" | grep -v "EXTERNAL IP" | awk -F\| '{print $6}'`
-while read -r lin
-do
-    lin="\"${lin}\",\n"
-    str=${str}${lin}
-done <<< $ip
+	while read -r lin
+	    do
+	    lin="\"${lin}\",\n"
+	    str=${str}${lin}
+	done <<< $ip
 
-str="${str::-3}"
-echo -ne $str>> ./inventory.json
-printf '\n           }\n   },'>> ./inventory.json
+    str="${str::-3}"'\n'"           "'}\n   },\n'
+    st=${st}${str}
+done
 
-printf '\n "app": {\n  "hosts": {\n         '>> ./inventory.json
-str=" "
-ip=`yc compute instances list | grep "app" | grep -v "EXTERNAL IP" | awk -F\| '{print $6}'`
-while read -r lin
-do
-    lin="\"${lin}\",\n"
-    str=${str}${lin}
-done <<< $ip
-
-str="${str::-3}"
-echo -ne $str>> ./inventory.json
-printf '\n           }\n   },'>> ./inventory.json
-
-printf '\n "db": {\n  "hosts": {\n         '>> ./inventory.json
-str=" "
-ip=`yc compute instances list | grep "db" | grep -v "EXTERNAL IP" | awk -F\| '{print $6}'`
-while read -r lin
-do
-    lin="\"${lin}\",\n"
-    str=${str}${lin}
-done <<< $ip
-
-str="${str::-3}"
-echo -ne $str>> ./inventory.json
-printf '\n           }\n   },'>> ./inventory.json
-
-printf '\n}'>> ./inventory.json
+st='{\n'${st::-3}'\n}\n'
+echo -ne $st> ./inventory.json
