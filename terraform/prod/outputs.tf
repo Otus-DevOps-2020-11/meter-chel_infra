@@ -13,5 +13,5 @@ resource "local_file" "AnsibleInventory" {
   db-extip = module.db.external_ip_address_db,
  }
  )
- filename = "../../ansible/inventory.ini"
+ filename = "../../ansible/environments/prod/inventory.ini"
 }

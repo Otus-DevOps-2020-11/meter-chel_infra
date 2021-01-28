@@ -5,7 +5,7 @@
             "service_account_key_file": "{{ user `service_account_key_file` }}",
             "folder_id": "{{ user `folder_id`}}",
             "source_image_family": "{{ user `source_image_family`}}",
-            "image_name": "reddit-db-ansible",
+            "image_name": "db-ansible",
             "image_family": "reddit-db-base",
             "ssh_username": "ubuntu",
             "use_ipv4_nat": "true",
@@ -23,7 +23,7 @@
         {
             "type": "ansible",
             "user": "ubuntu",
-            "playbook_file": "../ansible/packer_db.yml"
+            "playbook_file": "../ansible/playbooks/packer_db.yml"
 
         }
     ]

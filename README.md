@@ -1636,3 +1636,84 @@ inventory = ./inventory.ini
 [inventory]
 enable_plugins = ini
 ```
+
+
+# Домашняя работа к лекции №12 (Ansible-3)
+# Ansible роли, управление настройками нескольких окружений
+
+Создал init структуру с принятым на Galaxy форматом для ролей stage и prod
+```
+ansible-galaxy init app
+ansible-galaxy init db
+```
+Распределил по директориям файлы шаблонов и файлов конфигураций.
+Из playbook перенес раздел tasks в директорию tasks.
+Поскольку структура стандартизована в модулях не нужно указывать полный путь к шаблонам и файлам, а достаточно имени.
+Хендлеры и переменные также выносятся в отдельную директорию.
+В playbook app и db указываются только необходимые роли.
+
+Далее настраиваем файлы для разных окружений (prod и stage).
+Для каждого окружения создадим свой инвентори файл.
+В файл конфигурации запишем путь к stage инвентори.
+В каждом окружении создал директорию group_vars. В нем создаём файлы с переменными.
+
+Добавил роль из ansible-galaxy jdauphant.nginx. Добавил переменные в group_vars
+```
+nginx_sites:
+default:
+- listen 80
+- server_name "reddit"
+- location / {
+proxy_pass http://127.0.0.1:9292;
+}
+```
+Добавил роль jdauphant.nginx в playbook app.
+
+## Работа с Ansible Vault
+
+Создал в домашней директории файл с паролем vault.key:
+```
+openssl rand -base64 -out ~/vault.key 12
+```
+добавил в .gitignore
+Добавил путь к нему ansible.cfg
+
+Добавил плейбук для создания пользователей (и ссылку на него в site.yml) и создал файл с данными пользователей credentials.yml
+Зашифровал файл с помощью ansible-vault.
+```
+ansible-vault encrypt environments/prod/credentials.yml
+ansible-vault encrypt environments/stage/credentials.yml
+```
+Дешифровка
+```
+ansible-vault decrypt environments/prod/credentials.yml
+ansible-vault decrypt environments/stage/credentials.yml
+```
+
+
+# Задание со * Работа с динамическим инвентори
+
+В outputs.tf в параметре filename для stage и prod потребовалось исправить параметр filename
+```
+output "external_ip_address_app" {
+   value = module.app.external_ip_address_app
+}
+
+output "external_ip_address_db" {
+   value = module.db.external_ip_address_db
+}
+
+resource "local_file" "AnsibleInventory" {
+ content = templatefile("inventory.tmpl",
+ {
+  app-extip = module.app.external_ip_address_app,
+  db-extip = module.db.external_ip_address_db,
+ }
+ )
+ filename = "../../ansible/environments/prod/inventory.ini"
+}
+```
+Требуется вносить изменения в 'ansible.cfg' или запускать с ключем i
+```
+ansible-playbook -i environments/prod/inventory site.yml
+```
