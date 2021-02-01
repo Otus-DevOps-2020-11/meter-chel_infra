@@ -1717,3 +1717,195 @@ resource "local_file" "AnsibleInventory" {
 ```
 ansible-playbook -i environments/prod/inventory site.yml
 ```
+
+# Домашняя работа к лекции №13 (ansible-4)
+# Разработка и тестирование ролей и плейбуков
+
+
+## Установка Vagrant
+```
+mkdir ~/vagrant
+cd ~/vagrant
+wget https://releases.hashicorp.com/vagrant/2.2.14/vagrant_2.2.14_x86_64.deb
+dpkg -i vagrant_2.2.14_x86_64.deb
+rm -f vagrant_2.2.14_x86_64.deb
+cd ~
+rmdir ~/vagrant
+vagrant -v
+```
+
+Команды для работы с vagrant
+```
+vagrant up - создание ВМ
+vagrant box list - список боксов
+vagrant status - Статус ВМ
+vagrant ssh appserver - подключение к ВМ appserver
+vagrant provision dbserver - Запустить секцию procision на ВМ
+vagrant destroy -f - Удалить ВМ без подтверждения
+```
+
+## Vagrantfile
+
+```
+Vagrant.configure("2") do |config|
+
+  config.vm.provider :virtualbox do |v|
+    v.memory = 512
+  end
+
+  config.vm.define "dbserver" do |db|
+    db.vm.box = "ubuntu/xenial64"
+    db.vm.hostname = "dbserver"
+    db.vm.network :private_network, ip: "10.10.10.10"
+
+    db.vm.provision "ansible" do |ansible|
+      ansible.playbook = "playbooks/site.yml"
+      ansible.groups = {
+      "db" => ["dbserver"],
+      "db:vars" => {"mongo_bind_ip" => "0.0.0.0"}
+      }
+    end
+  end
+
+  config.vm.define "appserver" do |app|
+    app.vm.box = "ubuntu/xenial64"
+    app.vm.hostname = "appserver"
+    app.vm.network :private_network, ip: "10.10.10.20"
+
+    app.vm.provision "ansible" do |ansible|
+      ansible.playbook = "playbooks/site.yml"
+      ansible.groups = {
+      "app" => ["appserver"],
+      "app:vars" => { "db_host" => "10.10.10.10"}
+      }
+       ansible.extra_vars = {
+        "deploy_user" => "ubuntu",
+        "nginx_sites": {
+          "default": [
+            "listen 80",
+            "server_name \"reddit\"",
+            "location / { proxy_pass http://127.0.0.1:9292; }"
+          ]
+        }
+      }
+    end
+  end
+end
+```
+
+в файле добавлен провиженер для DB:
+```
+db.vm.provision "ansible" do |ansible|
+      ansible.playbook = "playbooks/site.yml"
+      ansible.groups = {
+      "db" => ["dbserver"],
+      "db:vars" => {"mongo_bind_ip" => "0.0.0.0"}
+      }
+```
+Запуcк провиженера
+```
+vagrant provision dbserver
+```
+
+Добавил плейбук base.yml, в котором описал установку python. Добавил его в site.yml.
+```
+---
+- name: Check && install python
+  hosts: all
+  become: true
+  gather_facts: False
+
+  tasks:
+    - name: Install python for Ansible
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+      changed_when: False
+```
+Используется raw модуль, который позволяет запускать команды по SSH и не требует наличия python на управляемом хосте.
+Отменен также сбор фактов ансиблом, т.к. данный процесс требует установленного python и выполняется перед началом применения конфигурации.
+
+Добавил файл db/tasks/install_mongo.yml, перенес в него таски установки MongoDB из packer_db.yml. Добавил тег 'install'.
+В файл db/tasks/config_mongo.yml добавил таск с настройкой конфига MongoDB. Добавил тег 'config'
+
+Аналогичные действия выполнил и для роли app.
+В app/tasks/ruby.yml перенес таски относящиеся к установке ruby.
+В app/tasks/puma.yml относящиеся к установке puma server.
+Добавил провиженер в Vagrantfile для APP.
+
+Параметризировал конфигурацию, чтобы можно было использовать ее для другого пользователя.
+То есть во всех файлах заменил 'ubuntu' на '{{ deploy_user }}'.
+
+
+## Задание со *
+
+Для передачи параметров nginx в роли jdauphant.nginx в провиженер в Vagrantfile для APP добавил:
+```
+        "nginx_sites": {
+          "default": [
+            "listen 80",
+            "server_name \"reddit\"",
+            "location / { proxy_pass http://127.0.0.1:9292; }"
+          ]
+        }
+```
+
+В итоге при выполнении 'vagrant up' будут созданы две ВМ (db и app).
+Для доступа к тестовому приложению достаточно в браузере ввести 'http://10.10.10.20' без указания порта
+
+
+## Тестирование роли
+
+Для тестирования ролей ansible необходимо установить Molecule, Ansible, Testinfra.
+
+requirements.txt (В методичке описана molecule v2, необходимо ограничить версию molecule не выше 2.xx)
+```
+ansible>=2.4
+molecule<=2.99
+testinfra>=1.10
+python-vagrant>=0.5.15
+```
+'pip install -r ansible/requirements.txt'
+
+
+Команда molecule init для создания заготовки тестов для роли db (ansible/roles/db/)
+'molecule init scenario --scenario-name default -r db -d vagrant'
+
+при выполнении появилась ошибка, потребовалось выполнить
+```
+pip2 uninstall backports.functools-lru-cache
+apt install python-backports.functools-lru-cache
+```
+
+Команды molecule:
+molecule create - создает инстанс для теста
+molecule list - просмотреть созданный инстанс
+molecule login -h instance - подключиться к инстансу
+molecule converge - запустить роль в инстансе
+molecule verify - запустить тесты
+molecule destroy - удалить инстанс
+molecule test - запустить последовательность create, converge, verify, destroy
+
+
+## Самостоятельно
+
+В файл db/molecule/default/tests/test_default.py добавил проверку доступности порта 27017.
+```
+def testing_mongo_port(host):
+    host.socket("tcp://0.0.0.0:27017").is_listening
+```
+При выполнении 'molecule verify' счетчик тестов увеличился на 1
+
+В провиженерах packer добавил путь к ролям ansible.
+
+'app'
+```
+"extra_arguments": ["--tags","ruby"],
+"ansible_env_vars": ["ANSIBLE_ROLES_PATH={{ pwd }}/ansible/roles"]
+```
+
+'db'
+```
+"ansible_env_vars": ["ANSIBLE_ROLES_PATH={{ pwd }}/ansible/roles"]
+```
+
+## Задание со *
+Не удалось выполнить - драйвера для YC нет.
